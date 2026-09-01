@@ -1,0 +1,8 @@
+export const DeckLogo = (props) => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M16 4L27 10L16 16L5 10L16 4Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+    <path d="M5 10V22L16 28L27 22V10" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+    <path d="M5 16L16 22L27 16" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+  </svg>
+)
+export default DeckLogo
