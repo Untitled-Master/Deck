@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 
 const ThemeContext = createContext(null)
 
-const THEME_IDS = ["light", "dark", "system", "vercel", "github", "pink", "supabase", "claude"]
+const THEME_IDS = ["light", "dark", "system", "vercel", "github", "pink", "supabase", "claude", "oled"]
 function getStoredTheme() {
   try {
     const raw = localStorage.getItem("deck:settings")
@@ -31,6 +31,7 @@ function getEffectiveTheme(stored) {
   if (stored === "pink") return "pink"
   if (stored === "supabase") return "supabase"
   if (stored === "claude") return "claude"
+  if (stored === "oled") return "oled"
   return stored === "light" ? "light" : "dark"
 }
 
@@ -77,7 +78,7 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     try {
       const root = document.documentElement
-      root.classList.remove("light", "dark", "vercel", "github", "pink", "supabase", "claude")
+      root.classList.remove("light", "dark", "vercel", "github", "pink", "supabase", "claude", "oled")
       root.classList.add(effective)
       root.setAttribute("data-theme", effective)
       // also set color-scheme for native UI (vercel/github/pink/supabase/claude are dark)

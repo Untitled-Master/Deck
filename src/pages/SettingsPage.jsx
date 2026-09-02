@@ -238,7 +238,7 @@ export default function SettingsPage() {
       const label = labelMap[path] || path
       let valueLabel = String(value)
       if (path === "language") valueLabel = value === "fr" ? t("settings.general.french") : t("settings.general.english")
-      else if (path === "theme") valueLabel = value === "dark" ? t("settings.general.dark") : value === "light" ? t("settings.general.light") : value === "vercel" ? "Vercel" : value === "github" ? "GitHub" : value === "pink" ? "Pink" : value === "supabase" ? "Supabase" : value === "claude" ? "Claude Code" : t("settings.general.system")
+      else if (path === "theme") valueLabel = value === "dark" ? t("settings.general.dark") : value === "light" ? t("settings.general.light") : value === "vercel" ? "Vercel" : value === "github" ? "GitHub" : value === "pink" ? "Pink" : value === "supabase" ? "Supabase" : value === "claude" ? "Claude Code" : value === "oled" ? "OLED" : t("settings.general.system")
       else if (path === "editor.defaultLimit") valueLabel = `${value} ${t("settings.editor.rowsSuffix")}`
       else if (path === "editor.monacoTheme") { try { valueLabel = getThemeLabel(value) } catch { valueLabel = String(value) } }
       else if (path === "editor.fontSize") valueLabel = `${value}px`
@@ -542,7 +542,7 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] tracking-wide text-[#66645F] hidden sm:inline">or</span>
                     <CustomSelect
-                      value={["vercel","github","pink","supabase","claude"].includes(settings.theme) ? settings.theme : "__none__"}
+                      value={["vercel","github","pink","supabase","claude","oled"].includes(settings.theme) ? settings.theme : "__none__"}
                       onChange={v => update("theme", v === "__none__" ? "dark" : v)}
                       options={[
                         { value: "__none__", label: "Custom theme" },
@@ -551,6 +551,7 @@ export default function SettingsPage() {
                         { value: "pink", label: "Pink" },
                         { value: "supabase", label: "Supabase" },
                         { value: "claude", label: "Claude Code" },
+                        { value: "oled", label: "OLED" },
                       ]}
                       width="w-[170px]"
                     />
