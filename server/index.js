@@ -546,6 +546,182 @@ app.get("/api/schema", async (req, res) => {
   }
 })
 
+/* ───────── Supabase-like CRUD REST API ───────── */
+async function getPrimaryKey(table) {
+  const p = getPool()
+  if (!p) return null
+  const r = await p.query(`
+    SELECT kcu.column_name
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
+    WHERE tc.constraint_type='PRIMARY KEY' AND tc.table_schema='public' AND tc.table_name=$1
+    LIMIT 1;
+  `, [table])
+  return r.rows[0]?.column_name || null
+}
+
+function isValidTable(name) {
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)
+}
+
+// List / filter — GET /api/rest/:table?select=id,name&limit=10&offset=0&order=name.desc&id=eq.122
+app.get("/api/rest/:table", async (req, res) => {
+  const p = getPool()
+  if (!p) return res.status(400).json({ success: false, error: "Not connected" })
+  const { table } = req.params
+  if (!isValidTable(table)) return res.status(400).json({ success: false, error: "Invalid table name" })
+  try {
+    const { select, limit, offset, order, ...filters } = req.query
+    const cols = select ? String(select).split(",").map(s=> s.trim()).filter(Boolean) : ["*"]
+    const selectClause = cols[0]==="*" ? "*" : cols.map(c=> `"${c.replace(/"/g,'""')}"`).join(", ")
+    let sql = `SELECT ${selectClause} FROM public."${table}"`
+    const params = []
+    const where = []
+    let idx = 1
+    for (const [k, v] of Object.entries(filters)) {
+      if (!isValidTable(k)) continue
+      // support supabase style ?col=eq.value or ?col=value
+      let val = String(v)
+      let op = "="
+      if (val.startsWith("eq.")) { val = val.slice(3); op = "=" }
+      else if (val.startsWith("neq.")) { val = val.slice(4); op = "!=" }
+      else if (val.startsWith("gt.")) { val = val.slice(3); op = ">" }
+      else if (val.startsWith("lt.")) { val = val.slice(3); op = "<" }
+      where.push(`"${k.replace(/"/g,'""')}" ${op} $${idx++}`)
+      params.push(val)
+    }
+    if (where.length) sql += " WHERE " + where.join(" AND ")
+    if (order) {
+      const [col, dir] = String(order).split(".")
+      if (isValidTable(col)) sql += ` ORDER BY "${col.replace(/"/g,'""')}" ${dir?.toLowerCase()==="desc"?"DESC":"ASC"}`
+    }
+    const lim = Math.min(parseInt(limit)||100, 500)
+    const off = parseInt(offset)||0
+    sql += ` LIMIT $${idx++} OFFSET $${idx++}`
+    params.push(lim, off)
+    const result = await p.query(sql, params)
+    // total count
+    let total = null
+    try {
+      let countSql = `SELECT count(*)::int as total FROM public."${table}"`
+      if (where.length) countSql += " WHERE " + where.join(" AND ")
+      const countParams = params.slice(0, params.length-2) // exclude limit/offset
+      const c = await p.query(countSql, countParams)
+      total = c.rows[0]?.total ?? result.rowCount
+    } catch {}
+    res.json({ data: result.rows, count: total, limit: lim, offset: off })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// Get one by PK — GET /api/rest/:table/:id
+app.get("/api/rest/:table/:id", async (req, res) => {
+  const p = getPool()
+  if (!p) return res.status(400).json({ error: "Not connected" })
+  const { table, id } = req.params
+  if (!isValidTable(table)) return res.status(400).json({ error: "Invalid table" })
+  try {
+    const pk = await getPrimaryKey(table) || "id"
+    const result = await p.query(`SELECT * FROM public."${table}" WHERE "${pk.replace(/"/g,'""')}" = $1 LIMIT 1`, [id])
+    if (!result.rows.length) return res.status(404).json({ error: "Not found" })
+    res.json({ data: result.rows[0] })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// Create — POST /api/rest/:table  {json} or [{...}]
+app.post("/api/rest/:table", async (req, res) => {
+  const p = getPool()
+  if (!p) return res.status(400).json({ error: "Not connected" })
+  const { table } = req.params
+  if (!isValidTable(table)) return res.status(400).json({ error: "Invalid table" })
+  const body = req.body
+  const rows = Array.isArray(body) ? body : [body]
+  if (!rows.length || typeof rows[0] !== "object") return res.status(400).json({ error: "Body must be object or array of objects" })
+  try {
+    const cols = Object.keys(rows[0])
+    if (!cols.length) return res.status(400).json({ error: "No columns provided" })
+    if (!cols.every(isValidTable)) return res.status(400).json({ error: "Invalid column name" })
+    const colList = cols.map(c=> `"${c.replace(/"/g,'""')}"`).join(", ")
+    const placeholders = rows.map((_, rIdx) => `(${cols.map((_, cIdx) => `$${rIdx*cols.length + cIdx +1}`).join(", ")})`).join(", ")
+    const params = rows.flatMap(r=> cols.map(c=> r[c]))
+    const sql = `INSERT INTO public."${table}" (${colList}) VALUES ${placeholders} RETURNING *`
+    const result = await p.query(sql, params)
+    res.status(201).json({ data: result.rows, count: result.rowCount })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// Update — PATCH /api/rest/:table/:id  {json}
+app.patch("/api/rest/:table/:id", async (req, res) => {
+  const p = getPool()
+  if (!p) return res.status(400).json({ error: "Not connected" })
+  const { table, id } = req.params
+  if (!isValidTable(table)) return res.status(400).json({ error: "Invalid table" })
+  const body = req.body
+  if (!body || typeof body !== "object" || Array.isArray(body) || !Object.keys(body).length) return res.status(400).json({ error: "Body must be non-empty object" })
+  try {
+    const pk = await getPrimaryKey(table) || "id"
+    const cols = Object.keys(body)
+    if (!cols.every(isValidTable)) return res.status(400).json({ error: "Invalid column" })
+    const setClause = cols.map((c,i)=> `"${c.replace(/"/g,'""')}" = $${i+1}`).join(", ")
+    const params = cols.map(c=> body[c])
+    params.push(id)
+    const sql = `UPDATE public."${table}" SET ${setClause} WHERE "${pk.replace(/"/g,'""')}" = $${params.length} RETURNING *`
+    const result = await p.query(sql, params)
+    if (!result.rows.length) return res.status(404).json({ error: "Not found" })
+    res.json({ data: result.rows[0] })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// Delete — DELETE /api/rest/:table/:id  or /api/rest/:table?filter
+app.delete("/api/rest/:table/:id", async (req, res) => {
+  const p = getPool()
+  if (!p) return res.status(400).json({ error: "Not connected" })
+  const { table, id } = req.params
+  if (!isValidTable(table)) return res.status(400).json({ error: "Invalid table" })
+  try {
+    const pk = await getPrimaryKey(table) || "id"
+    const result = await p.query(`DELETE FROM public."${table}" WHERE "${pk.replace(/"/g,'""')}" = $1 RETURNING *`, [id])
+    if (!result.rows.length) return res.status(404).json({ error: "Not found" })
+    res.json({ data: result.rows[0], count: result.rowCount })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete("/api/rest/:table", async (req, res) => {
+  const p = getPool()
+  if (!p) return res.status(400).json({ error: "Not connected" })
+  const { table } = req.params
+  if (!isValidTable(table)) return res.status(400).json({ error: "Invalid table" })
+  const { ...filters } = req.query
+  if (!Object.keys(filters).length) return res.status(400).json({ error: "Provide filter query e.g. ?id=eq.122 or use DELETE /:table/:id" })
+  try {
+    const where = []
+    const params = []
+    let idx=1
+    for (const [k,v] of Object.entries(filters)) {
+      if (!isValidTable(k)) continue
+      let val = String(v)
+      let op="="
+      if(val.startsWith("eq.")) val=val.slice(3)
+      where.push(`"${k.replace(/"/g,'""')}" ${op} $${idx++}`)
+      params.push(val)
+    }
+    const sql = `DELETE FROM public."${table}"${where.length?` WHERE ${where.join(" AND ")}`:""} RETURNING *`
+    const result = await p.query(sql, params)
+    res.json({ data: result.rows, count: result.rowCount })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
 app.get("/api/health", (req, res) => res.json({ ok: true, connected: !!pool }))
 
 // Serve frontend in production (unified server)

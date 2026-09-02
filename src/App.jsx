@@ -7,6 +7,10 @@ import HealthPage from "@/pages/HealthPage"
 import LogsPage from "@/pages/LogsPage"
 import SqlPage from "@/pages/SqlPage"
 import SchemaPage from "@/pages/SchemaPage"
+import ApiOverview from "@/pages/api/ApiOverview"
+import ApiEndpoints from "@/pages/api/ApiEndpoints"
+import ApiExamples from "@/pages/api/ApiExamples"
+import ApiPlayground from "@/pages/api/ApiPlayground"
 import ConnectPage from "@/pages/ConnectPage"
 import SettingsPage from "@/pages/SettingsPage"
 import HistoryPage from "@/pages/HistoryPage"
@@ -33,6 +37,11 @@ function AppInner() {
             <Route path="/logs" element={<LogsPage />} />
             <Route path="/sql" element={<SqlPage />} />
             <Route path="/schema" element={<SchemaPage />} />
+            <Route path="/api" element={<ApiOverview />} />
+            <Route path="/api/endpoints" element={<ApiEndpoints />} />
+            <Route path="/api/examples" element={<ApiExamples />} />
+            <Route path="/api/playground" element={<ApiPlayground />} />
+            <Route path="/api/*" element={<Navigate to="/api" replace />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="*" element={<Navigate to="/connect" replace />} />

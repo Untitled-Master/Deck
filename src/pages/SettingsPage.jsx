@@ -5,7 +5,7 @@ import Google from "@/components/icons/Google"
 import {
   Settings, Shield, Palette, Code2, Database, Bell, Trash2,
   Download, Upload, LogOut, Check, X, RefreshCw, Lock, Eye, EyeOff,
-  Globe, Monitor, Moon, Sun, Languages, SlidersHorizontal, KeyRound, History, Info, Loader2, Sparkles, Zap, FileJson, BadgeCheck, CheckCircle, ChevronDown, RotateCcw, Search, Paintbrush
+  Globe, Monitor, Moon, Sun, Languages, SlidersHorizontal, KeyRound, History, Info, Loader2, Sparkles, Zap, FileJson, BadgeCheck, CheckCircle, ChevronDown, RotateCcw, Search, Paintbrush, Layers
 } from "lucide-react"
 import { toast } from "sonner"
 import { MONACO_THEMES, getThemeBg, getThemeLabel } from "@/lib/monacoThemes"
@@ -53,6 +53,9 @@ const DEFAULT_SETTINGS = {
     crashReports: false,
     analytics: false,
   },
+  navigation: {
+    showApi: true,
+  },
 }
 
 function loadSettings() {
@@ -71,6 +74,7 @@ function loadSettings() {
       sync: { ...DEFAULT_SETTINGS.sync, ...(parsed.sync || {}) },
       notifications: { ...DEFAULT_SETTINGS.notifications, ...(parsed.notifications || {}) },
       privacy: { ...DEFAULT_SETTINGS.privacy, ...(parsed.privacy || {}) },
+      navigation: { ...DEFAULT_SETTINGS.navigation, ...(parsed.navigation || {}) },
     }
   } catch { return DEFAULT_SETTINGS }
 }
@@ -228,6 +232,7 @@ export default function SettingsPage() {
         "privacy.telemetry": t("settings.privacy.telemetryLabel"),
         "privacy.crashReports": t("settings.privacy.crashLabel"),
         "privacy.analytics": t("settings.privacy.analyticsLabel"),
+        "navigation.showApi": "Show API section",
       }
       const label = labelMap[path] || path
       let valueLabel = String(value)
@@ -534,6 +539,15 @@ export default function SettingsPage() {
                 </div>
               </Row>
             </SectionCard>
+
+            {/* Navigation */}
+            <div className="mt-6">
+              <SectionCard icon={Layers} title="Navigation" desc="Control which sections appear in the sidebar.">
+                <Row label="Show API section" hint="Show the Developer / API group (Overview, Endpoints, Examples, Playground) in the left navigation.">
+                  <Toggle checked={settings.navigation?.showApi ?? true} onChange={v=> update("navigation.showApi", v)} />
+                </Row>
+              </SectionCard>
+            </div>
 
             {/* Editor */}
             <div className="mt-6">

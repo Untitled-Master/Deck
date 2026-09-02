@@ -48,6 +48,7 @@ export const en = {
     data: "Data",
     sqlEditor: "SQL Editor",
     schema: "Schema",
+    api: "API",
     logs: "Logs",
     history: "History",
     settings: "Settings",
