@@ -2,24 +2,9 @@ import { useEffect, useState } from "react"
 import { Key, Hash, Loader2, AlertCircle } from "lucide-react"
 import { useConnection } from "@/context/ConnectionContext"
 import { api } from "@/lib/api"
+import { FAKE_STRUCTURE } from "@/lib/fakeData"
 
-const MOCK_STRUCTURE = {
-  favorites: [
-    { column: "_id", type: "string", nullable: false, def: "auto", pk: true },
-    { column: "addedAt", type: "timestamp", nullable: false, def: "—" },
-    { column: "mediaType", type: "text", nullable: false, def: "—" },
-    { column: "posterPath", type: "text", nullable: false, def: "—" },
-    { column: "title", type: "text", nullable: false, def: "—" },
-    { column: "tmdbId", type: "integer", nullable: false, def: "—" },
-    { column: "userId", type: "uuid", nullable: false, def: "—", fk: "users._id" },
-  ],
-  users: [
-    { column: "_id", type: "uuid", nullable: false, def: "auto", pk: true },
-    { column: "createdAt", type: "timestamp", nullable: false, def: "now()" },
-    { column: "email", type: "text", nullable: false, def: "—", unique: true },
-    { column: "name", type: "text", nullable: false, def: "—" },
-  ],
-}
+const MOCK_STRUCTURE = FAKE_STRUCTURE
 
 export default function StructureView({ table }) {
   const { connected } = useConnection()

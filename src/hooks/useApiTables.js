@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react"
 import { api, API_BASE } from "@/lib/api"
 import { useConnection } from "@/context/ConnectionContext"
+import { FAKE_API_TABLES } from "@/lib/fakeData"
 
-const MOCK_TABLES = [
-  { name: "orders", columns: ["id","user_id","product_id","total"] },
-  { name: "products", columns: ["id","name","price","stock"] },
-  { name: "test", columns: ["id","num"] },
-  { name: "users", columns: ["_id","name","email","role"] },
-]
+const MOCK_TABLES = FAKE_API_TABLES
 
 export function useApiTables() {
   const { connected } = useConnection()

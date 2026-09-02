@@ -8,6 +8,7 @@ import { useConnection } from "@/context/ConnectionContext"
 import { useTranslation } from "@/context/I18nContext"
 import { api } from "@/lib/api"
 import { X, Plus, AlertTriangle } from "lucide-react"
+import { FAKE_ROWS, getMockRowsForTable } from "@/lib/fakeData"
 
 const LS_TABS = "deck:sql:tabs"
 const LS_ACTIVE = "deck:sql:active"
@@ -78,10 +79,18 @@ function mockResultForStatement(stmt) {
   if (q.startsWith("update")) return { command: "UPDATE", rowCount: 1, rows: [], fields: [], duration: 8, sql: stmt }
   if (q.startsWith("delete")) return { command: "DELETE", rowCount: 1, rows: [], fields: [], duration: 8, sql: stmt }
   if (q.startsWith("create")) return { command: "CREATE", rowCount: 0, rows: [], fields: [], duration: 15, sql: stmt }
-  if (q.includes("favorites")) return { command: "SELECT", rowCount: 6, rows: [
-    { _id: "jh79sztvs3tz7097h2v_", addedAt: "5/8/2026, 7:59:34 PM", mediaType: "movie", posterPath: "/vQWk5YBFWF4bZaofA...", title: "Pulp Fiction", tmdbId: 680, userId: "j57633qr3e49m6" },
-  ], fields: [], duration: 14, sql: stmt }
-  return { command: "SELECT", rowCount: 2, rows: [{ id: 1, name: "Alice" }], fields: [], duration: 10, sql: stmt }
+  const tables = ["favorites", "users", "orders", "products", "watchHistory", "watch_history", "watchlists", "test"]
+  for (const tbl of tables) {
+    if (q.includes(tbl)) {
+      const key = tbl === "watch_history" ? "watchHistory" : tbl
+      const rows = getMockRowsForTable(key).slice(0, 6)
+      const limitMatch = q.match(/limit\s+(\d+)/)
+      const lim = limitMatch ? Math.min(parseInt(limitMatch[1], 10), rows.length) : rows.length
+      const sliced = rows.slice(0, lim)
+      return { command: "SELECT", rowCount: sliced.length, rows: sliced, fields: [], duration: 14, sql: stmt }
+    }
+  }
+  return { command: "SELECT", rowCount: 2, rows: FAKE_ROWS.users.slice(0, 2), fields: [], duration: 10, sql: stmt }
 }
 
 export default function SqlPage() {

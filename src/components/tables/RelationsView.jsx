@@ -2,44 +2,9 @@ import { useEffect, useState } from "react"
 import { Share2, ArrowRight, ArrowLeft, Loader2, AlertCircle, Link2, Plus, Table2, Key } from "lucide-react"
 import { useConnection } from "@/context/ConnectionContext"
 import { api } from "@/lib/api"
+import { FAKE_RELATIONS } from "@/lib/fakeData"
 
-const MOCK_RELATIONS = {
-  users: {
-    outgoing: [],
-    incoming: [
-      { table: "posts", column: "author_id", foreignColumn: "id", constraintName: "posts_author_id_fkey", deleteRule: "CASCADE", updateRule: "NO ACTION" },
-      { table: "orders", column: "user_id", foreignColumn: "id", constraintName: "orders_user_id_fkey", deleteRule: "CASCADE", updateRule: "NO ACTION" },
-      { table: "audit_logs", column: "actor_id", foreignColumn: "id", constraintName: "audit_logs_actor_id_fkey", deleteRule: "SET NULL", updateRule: "NO ACTION" },
-    ],
-  },
-  posts: {
-    outgoing: [
-      { column: "author_id", foreignTable: "users", foreignColumn: "id", constraintName: "posts_author_id_fkey", deleteRule: "CASCADE", updateRule: "NO ACTION" },
-    ],
-    incoming: [
-      { table: "comments", column: "post_id", foreignColumn: "id", constraintName: "comments_post_id_fkey", deleteRule: "CASCADE", updateRule: "NO ACTION" },
-    ],
-  },
-  orders: {
-    outgoing: [
-      { column: "user_id", foreignTable: "users", foreignColumn: "id", constraintName: "orders_user_id_fkey", deleteRule: "CASCADE", updateRule: "NO ACTION" },
-      { column: "product_id", foreignTable: "products", foreignColumn: "id", constraintName: "orders_product_id_fkey", deleteRule: "RESTRICT", updateRule: "NO ACTION" },
-    ],
-    incoming: [],
-  },
-  products: {
-    outgoing: [],
-    incoming: [
-      { table: "orders", column: "product_id", foreignColumn: "id", constraintName: "orders_product_id_fkey", deleteRule: "RESTRICT", updateRule: "NO ACTION" },
-    ],
-  },
-  audit_logs: {
-    outgoing: [
-      { column: "actor_id", foreignTable: "users", foreignColumn: "id", constraintName: "audit_logs_actor_id_fkey", deleteRule: "SET NULL", updateRule: "NO ACTION" },
-    ],
-    incoming: [],
-  },
-}
+const MOCK_RELATIONS = FAKE_RELATIONS
 
 export default function RelationsView({ table, onSelectTable }) {
   const { connected } = useConnection()

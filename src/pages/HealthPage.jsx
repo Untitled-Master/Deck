@@ -5,13 +5,9 @@ import { useConnection } from "@/context/ConnectionContext"
 import { PostgreSQL } from "@/components/PostgreSQL"
 import TopBar from "@/components/layout/TopBar"
 import LeftNav from "@/components/layout/LeftNav"
+import { FAKE_TABLES } from "@/lib/fakeData"
 
-const MOCK_HEALTH_TABLES = [
-  { name: "orders", estimatedRows: 4, type: "table", sizeBytes: 8192, columnCount: 3 },
-  { name: "products", estimatedRows: 0, type: "table", sizeBytes: 0, columnCount: 3 },
-  { name: "test", estimatedRows: 0, type: "table", sizeBytes: 0, columnCount: 2 },
-  { name: "users", estimatedRows: 6, type: "table", sizeBytes: 16384, columnCount: 5 },
-]
+const MOCK_HEALTH_TABLES = FAKE_TABLES.map(t => ({ name: t.name, estimatedRows: t.rows, type: t.type, sizeBytes: t.rows * 2048 + 4096, columnCount: 6 }))
 
 export default function HealthPage() {
   const { connected, config } = useConnection()

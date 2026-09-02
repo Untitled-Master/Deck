@@ -5,71 +5,9 @@ import { MONACO_THEMES } from "@/lib/monacoThemes"
 import { api } from "@/lib/api"
 import { useConnection } from "@/context/ConnectionContext"
 
-// Fallback schema for offline / mock mode — used when not connected
-// Mirrors sidebar mock + schema-page mock so hover works without DB
-const MOCK_HOVER_SCHEMAS = [
-  {
-    name: "favorites",
-    columns: [
-      { column: "_id", type: "string", isPrimary: true },
-      { column: "addedAt", type: "number" },
-      { column: "mediaType", type: "string" },
-      { column: "posterPath", type: "string" },
-      { column: "progress", type: "number" },
-      { column: "season", type: "number" },
-      { column: "title", type: "string" },
-      { column: "tmdbId", type: "number" },
-      { column: "updatedAt", type: "number" },
-      { column: "userId", type: 'Id<"users">', isFK: true },
-    ],
-  },
-  {
-    name: "users",
-    columns: [
-      { column: "_id", type: "string", isPrimary: true },
-      { column: "createdAt", type: "number" },
-      { column: "email", type: "string", isUnique: true },
-      { column: "name", type: "string" },
-      { column: "passwordHash", type: "string" },
-      { column: "premiumCode", type: "string" },
-      { column: "premiumExpiresAt", type: "number" },
-      { column: "premiumStatus", type: "string" },
-      { column: "profileId", type: 'Id<"_storage">' },
-    ],
-  },
-  {
-    name: "watchHistory",
-    columns: [
-      { column: "_id", type: "string", isPrimary: true },
-      { column: "duration", type: "number" },
-      { column: "episode", type: "number" },
-      { column: "isCompleted", type: "boolean" },
-      { column: "mediaType", type: "string" },
-      { column: "posterPath", type: "string" },
-      { column: "season", type: "number" },
-      { column: "status", type: "string" },
-      { column: "title", type: "string" },
-      { column: "tmdbId", type: "number" },
-      { column: "userId", type: 'Id<"users">', isFK: true },
-    ],
-  },
-  {
-    name: "watchlists",
-    columns: [
-      { column: "_id", type: "string", isPrimary: true },
-      { column: "addedAt", type: "number" },
-      { column: "mediaType", type: "string" },
-      { column: "posterPath", type: "string" },
-      { column: "status", type: "string" },
-      { column: "title", type: "string" },
-      { column: "tmdbId", type: "number" },
-      { column: "userId", type: 'Id<"users">', isFK: true },
-    ],
-  },
-  { name: "orders", columns: [{ column: "id", type: "integer", isPrimary: true }, { column: "user_id", type: "integer", foreignKey: { foreign_table: "users", foreign_column: "_id" } }, { column: "product_id", type: "integer", foreignKey: { foreign_table: "products", foreign_column: "id" } }, { column: "total", type: "numeric" }] },
-  { name: "products", columns: [{ column: "id", type: "integer", isPrimary: true }, { column: "name", type: "varchar" }, { column: "price", type: "numeric" }, { column: "stock", type: "integer" }] },
-  { name: "test", columns: [{ column: "id", type: "integer", isPrimary: true }, { column: "num", type: "integer" }] },
-]
+import { FAKE_HOVER_SCHEMAS } from "@/lib/fakeData"
+
+const MOCK_HOVER_SCHEMAS = FAKE_HOVER_SCHEMAS
 
 function getEditorSettings() {
   try {

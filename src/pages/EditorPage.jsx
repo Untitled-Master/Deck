@@ -13,6 +13,7 @@ import { useConnection } from "@/context/ConnectionContext"
 import { useTranslation } from "@/context/I18nContext"
 import { Braces, AlertTriangle } from "lucide-react"
 import { api } from "@/lib/api"
+import { FAKE_ROWS, getMockRowsForTable } from "@/lib/fakeData"
 
 function getConfirmEnabled() {
   try {
@@ -95,8 +96,21 @@ function mockResultForStatement(stmt) {
   if (q.startsWith("update")) return { command: "UPDATE", rowCount: 1, rows: [], fields: [], duration: 8, sql: stmt }
   if (q.startsWith("delete")) return { command: "DELETE", rowCount: 1, rows: [], fields: [], duration: 8, sql: stmt }
   if (q.startsWith("create")) return { command: "CREATE", rowCount: 0, rows: [], fields: [], duration: 15, sql: stmt }
+  // realistic SELECT — match table name in query
+  const tables = ["favorites", "users", "orders", "products", "watchHistory", "watch_history", "watchlists", "test"]
+  for (const tbl of tables) {
+    if (q.includes(tbl)) {
+      const key = tbl === "watch_history" ? "watchHistory" : tbl
+      const rows = getMockRowsForTable(key).slice(0, 6)
+      // respect LIMIT if present
+      const limitMatch = q.match(/limit\s+(\d+)/)
+      const lim = limitMatch ? Math.min(parseInt(limitMatch[1], 10), rows.length) : rows.length
+      const sliced = rows.slice(0, lim)
+      return { command: "SELECT", rowCount: sliced.length, rows: sliced, fields: [], duration: 14, sql: stmt }
+    }
+  }
   if (q.includes("posts")) return { command: "SELECT", rowCount: 2, rows: [{ id: 101, title: "Hello Postgres", author_id: 1, status: "published", views: 1230 }], fields: [], duration: 18, sql: stmt }
-  return { command: "SELECT", rowCount: 2, rows: [{ id: 1, name: "Alice" }], fields: [], duration: 10, sql: stmt }
+  return { command: "SELECT", rowCount: 2, rows: FAKE_ROWS.users.slice(0, 2), fields: [], duration: 10, sql: stmt }
 }
 
 export default function EditorPage() {

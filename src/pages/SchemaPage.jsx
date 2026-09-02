@@ -5,82 +5,9 @@ import { useConnection } from "@/context/ConnectionContext"
 import TopBar from "@/components/layout/TopBar"
 import LeftNav from "@/components/layout/LeftNav"
 import Sidebar from "@/components/layout/Sidebar"
+import { FAKE_SCHEMA } from "@/lib/fakeData"
 
-const IMAGE_MOCK = {
-  tables: [
-    {
-      name: "watchHistory",
-      columns: [
-        { column: "_id", type: "string", isPrimary: true },
-        { column: "duration", type: "number" },
-        { column: "episode", type: "number" },
-        { column: "isCompleted", type: "boolean" },
-        { column: "mediaType", type: "string" },
-        { column: "posterPath", type: "string" },
-        { column: "season", type: "number" },
-        { column: "status", type: "string" },
-        { column: "title", type: "string" },
-        { column: "tmdbId", type: "number" },
-        { column: "userId", type: 'Id<"users">', isFK: true },
-      ],
-      indexes: ["by_user: userId, _creationTime", "by_user_media: userId, tmdbId, _creationTime"],
-      pos: { x: 520, y: 40 },
-    },
-    {
-      name: "watchlists",
-      columns: [
-        { column: "_id", type: "string", isPrimary: true },
-        { column: "addedAt", type: "number" },
-        { column: "mediaType", type: "string" },
-        { column: "posterPath", type: "string" },
-        { column: "status", type: "string" },
-        { column: "title", type: "string" },
-        { column: "tmdbId", type: "number" },
-        { column: "userId", type: 'Id<"users">', isFK: true },
-      ],
-      indexes: ["by_user: userId, _creationTime", "by_user_status: userId, status, _creationTime"],
-      pos: { x: 280, y: 220 },
-    },
-    {
-      name: "favorites",
-      columns: [
-        { column: "_id", type: "string", isPrimary: true },
-        { column: "addedAt", type: "number" },
-        { column: "mediaType", type: "string" },
-        { column: "posterPath", type: "string" },
-        { column: "progress", type: "number" },
-        { column: "season", type: "number" },
-        { column: "title", type: "string" },
-        { column: "tmdbId", type: "number" },
-        { column: "updatedAt", type: "number" },
-        { column: "userId", type: 'Id<"users">', isFK: true },
-      ],
-      indexes: ["by_user: userId, _creationTime", "by_user_media: userId, tmdbId, _creationTime"],
-      pos: { x: 760, y: 260 },
-    },
-    {
-      name: "users",
-      columns: [
-        { column: "_id", type: "string", isPrimary: true },
-        { column: "createdAt", type: "number" },
-        { column: "email", type: "string" },
-        { column: "name", type: "string" },
-        { column: "passwordHash", type: "string" },
-        { column: "premiumCode", type: "string" },
-        { column: "premiumExpiresAt", type: "number" },
-        { column: "premiumStatus", type: "string" },
-        { column: "profileId", type: 'Id<"_storage">', isFK: false },
-      ],
-      indexes: ["by_email: email, _creationTime"],
-      pos: { x: 520, y: 520 },
-    },
-  ],
-  relations: [
-    { from: "watchlists", fromCol: "userId", to: "users", toCol: "_id" },
-    { from: "favorites", fromCol: "userId", to: "users", toCol: "_id" },
-    { from: "watchHistory", fromCol: "userId", to: "users", toCol: "_id" },
-  ],
-}
+const IMAGE_MOCK = FAKE_SCHEMA
 
 export default function SchemaPage() {
   const { connected } = useConnection()

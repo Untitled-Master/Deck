@@ -11,13 +11,9 @@ import TopBar from "@/components/layout/TopBar"
 import LeftNav from "@/components/layout/LeftNav"
 import Sidebar from "@/components/layout/Sidebar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FAKE_API_TABLES } from "@/lib/fakeData"
 
-const MOCK_TABLES = [
-  { name: "orders", columns: ["id","user_id","product_id","total"] },
-  { name: "products", columns: ["id","name","price","stock"] },
-  { name: "test", columns: ["id","num"] },
-  { name: "users", columns: ["_id","name","email","role"] },
-]
+const MOCK_TABLES = FAKE_API_TABLES
 
 export default function ApiPage() {
   const { connected } = useConnection()

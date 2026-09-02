@@ -3,13 +3,9 @@ import { useNavigate } from "react-router-dom"
 import { Search, Plus, Box } from "lucide-react"
 import { useConnection } from "@/context/ConnectionContext"
 import { api } from "@/lib/api"
+import { FAKE_TABLES } from "@/lib/fakeData"
 
-const MOCK_TABLES = [
-  { name: "orders", rows: 4, type: "table" },
-  { name: "products", rows: 0, type: "table" },
-  { name: "test", rows: 0, type: "table" },
-  { name: "users", rows: 6, type: "table" },
-]
+const MOCK_TABLES = FAKE_TABLES
 
 export default function Sidebar({ selectedTable, onSelectTable, search, setSearch }) {
   const { connected } = useConnection()

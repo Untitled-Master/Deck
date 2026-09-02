@@ -2,43 +2,9 @@ import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle, Link2, KeyRound, ArrowLeft, ArrowRight, SlidersHorizontal, EyeOff, ChevronDown, Trash2, Check, X, Plus } from "lucide-react"
 import { useConnection } from "@/context/ConnectionContext"
 import { api } from "@/lib/api"
+import { FAKE_ROWS } from "@/lib/fakeData"
 
-const MOCK_ROWS = {
-  favorites: [
-    { _id: "jh79sztvs3tz7097h2v_", addedAt: "5/8/2026, 7:59:34 PM", mediaType: "movie", posterPath: "/vQWk5YBFWF4bZaofA...", title: "Pulp Fiction", tmdbId: 680, userId: "j57633qr3e49m6", _creationTime: 1715183974000 },
-    { _id: "jh76xpstdg99b2h0pk_", addedAt: "5/8/2026, 7:48:55 PM", mediaType: "movie", posterPath: "/8v3Sqv9UcIUC4ebmp...", title: "21 Jump Street", tmdbId: 64688, userId: "j57633qr3e49m6", _creationTime: 1715183935000 },
-    { _id: "jh73nv6d3h4ym1p2fhg_", addedAt: "5/7/2026, 8:08:26 PM", mediaType: "movie", posterPath: "/tHhWlxge06gxU6ZQ...", title: "Swapped", tmdbId: 1007757, userId: "j57ac6yx9zdmxd", _creationTime: 1715096906000 },
-    { _id: "jh79h4vsdyr66cq85bp_", addedAt: "5/6/2026, 10:57:53 PM", mediaType: "tv", posterPath: "/f00nFvGcbTHpwZGLk...", title: "Suits", tmdbId: 37680, userId: "j57ac6yx9zdmxd", _creationTime: 1715021873000 },
-    { _id: "jh7612aptpzjapp0y2q_", addedAt: "5/6/2026, 10:46:14 PM", mediaType: "tv", posterPath: "/f00nFvGcbTHpwZGLk...", title: "Suits", tmdbId: 37680, userId: "j57633qr3e49m6", _creationTime: 1715021174000 },
-    { _id: "jh73gJ9vbtqqwj3d1f_", addedAt: "5/6/2026, 10:42:19 PM", mediaType: "movie", posterPath: "/oC68KgbyFiraKJRdU...", title: "Untold: Chess Mate...", tmdbId: 1641962, userId: "j57633qr3e49m6", _creationTime: 1715020939000 },
-  ],
-  users: [
-    { _id: "j57718db145jt0d1ksm_", createdAt: "5/30/2026, 12:02:18 PM", email: "khuneduan8@gmail.com", name: "سي جو اك وبينغي سومو", passwordHash: "b9e39e51dcf53b50d0...", premiumCode: "0000", premiumExpiresAt: "unset" },
-    { _id: "j57fcrsmgpxv174s7g3z", createdAt: "5/30/2026, 12:01:53 PM", email: "yacineyn1894@gmail.com", name: "Ycn", passwordHash: "5684927786775f0a39...", premiumCode: "0000", premiumExpiresAt: "unset" },
-    { _id: "j571sg9p96r194zejms_", createdAt: "5/8/2026, 7:33:18 PM", email: "wleft11jan@gmail.com", name: "wal-z1", passwordHash: "2f6e3c56e582d0920c...", premiumCode: "0000", premiumExpiresAt: "unset" },
-    { _id: "j57ac6yx9zdmxd84gcc_", createdAt: "5/6/2026, 10:56:31 PM", email: "a_belmehnouf@estin...", name: "0XS4B", passwordHash: "1138c415a330b331cf...", premiumCode: "0000", premiumExpiresAt: "unset" },
-    { _id: "j576ygcq7gb2hwn98v7_", createdAt: "5/6/2026, 10:26:59 PM", email: "untitledmaster16@g...", name: "theRealCoolKid", passwordHash: "0ea2761484969ba950f...", premiumCode: "0000", premiumExpiresAt: "unset" },
-    { _id: "j57633qr3e49m6esecs_", createdAt: "5/6/2026, 9:48:06 PM", email: "untitledmaster01@g...", name: "coolguyme", passwordHash: "7a5a60be633225ef8e...", premiumCode: "0000", premiumExpiresAt: "unset" },
-  ],
-  orders: [
-    { id: 1, user_id: 1, product_id: 1, total: "42.00" },
-    { id: 2, user_id: 2, product_id: 1, total: "19.99" },
-    { id: 3, user_id: 1, product_id: 2, total: "99.00" },
-    { id: 4, user_id: 3, product_id: 2, total: "600.00" },
-  ],
-  products: [
-    { id: 1, name: "Deck Pro", price: "99", stock: 12 },
-    { id: 2, name: "Deck CLI", price: "0", stock: 999 },
-  ],
-  test: [
-    { id: 1, num: 100 },
-    { id: 2, num: 200 },
-    { id: 3, num: 333 },
-    { id: 4, num: 600 },
-  ],
-  watchHistory: [],
-  watchlists: [],
-}
+const MOCK_ROWS = FAKE_ROWS
 
 function getShowGridLines() {
   try {
