@@ -598,6 +598,54 @@ html.supabase ::selection { background: rgba(62,207,142,0.22) !important; }
 html.supabase .data-grid::-webkit-scrollbar-track { background: #0a0a0a !important; }
 html.supabase .data-grid::-webkit-scrollbar-thumb { background: #262626 !important; }
 
+/* OLED theme — true black surfaces with cyan accents */
+html.oled {
+  --background: 0 0% 0%;
+  --foreground: 180 20% 92%;
+  --card: 0 0% 3%;
+  --card-foreground: 180 20% 92%;
+  --popover: 0 0% 3%;
+  --popover-foreground: 180 20% 92%;
+  --primary: 174 72% 50%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 180 8% 14%;
+  --secondary-foreground: 180 20% 92%;
+  --muted: 180 5% 42%;
+  --muted-foreground: 180 20% 92%;
+  --accent: 180 8% 14%;
+  --accent-foreground: 180 20% 92%;
+  --border: 180 6% 13%;
+  --input: 180 6% 18%;
+  --ring: 174 72% 50%;
+}
+
+html.oled body { background-color: #000000 !important; color: #E6FFFD !important; }
+html.oled .bg-\[\#1D1C1A\], html.oled .bg-\[\#292824\], html.oled .bg-\[\#2A2825\] { background-color: #000000 !important; }
+html.oled .bg-\[\#232220\], html.oled .bg-\[\#3B3A36\] { background-color: #080B0B !important; }
+html.oled .bg-\[\#3B3935\] { background-color: #0D1414 !important; }
+html.oled .bg-\[\#1C1917\] { background-color: #000000 !important; }
+html.oled .bg-\[\#F0EFEC\] { background-color: #E6FFFD !important; }
+html.oled .border-\[\#3B3A36\], html.oled .border-\[\#3B3935\] { border-color: #172323 !important; }
+html.oled .border-\[\#4A4944\], html.oled .border-\[\#5A5852\] { border-color: #263838 !important; }
+html.oled .border-\[\#F0EFEC\] { border-color: #E6FFFD !important; }
+html.oled .border-\[\#16803A\] { border-color: #18A999 !important; }
+html.oled .text-\[\#F0EFEC\], html.oled .text-\[\#E8E7E3\], html.oled .text-\[\#F5F4F1\] { color: #E6FFFD !important; }
+html.oled .text-\[\#B7B5B0\], html.oled .text-\[\#D6D4CF\] { color: #9BB8B7 !important; }
+html.oled .text-\[\#85837E\] { color: #668080 !important; }
+html.oled .text-\[\#66645F\] { color: #466060 !important; }
+html.oled .text-\[\#4A90E2\] { color: #58E6D4 !important; }
+html.oled .hover\:bg-\[\#3B3935\]:hover, html.oled .hover\:bg-\[\#232220\]:hover, html.oled .hover\:bg-\[\#292824\]:hover { background-color: #0D1414 !important; }
+html.oled .hover\:text-\[\#F0EFEC\]:hover, html.oled .hover\:text-\[\#B7B5B0\]:hover { color: #E6FFFD !important; }
+html.oled .focus\:border-\[\#4A4944\]:focus, html.oled .focus\:border-\[\#5A5852\]:focus { border-color: #18A999 !important; }
+html.oled .bg-\[\#4A90E2\] { background-color: #18A999 !important; color: #000000 !important; }
+html.oled .hover\:bg-\[\#3a7bc8\]:hover { background-color: #58E6D4 !important; }
+html.oled .border-\[\#4A90E2\] { border-color: #18A999 !important; }
+html.oled ::-webkit-scrollbar-thumb { background: #172323 !important; }
+html.oled ::-webkit-scrollbar-thumb:hover { background: #263838 !important; }
+html.oled ::selection { background: rgba(24,169,153,0.25) !important; }
+html.oled .data-grid::-webkit-scrollbar-track { background: #000000 !important; }
+html.oled .data-grid::-webkit-scrollbar-thumb { background: #172323 !important; }
+
 /* Claude Code theme — warm walnut / amber (Anthropic) */
 html.claude {
   --background: 25 18% 8%;
