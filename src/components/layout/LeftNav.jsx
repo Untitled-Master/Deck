@@ -1,7 +1,8 @@
-import { Activity, Table2, Box, List, History, Settings, ChevronsLeft, ChevronsRight, Braces, Code2, BookOpen, Terminal, Play, ChevronDown, ChevronRight, Layers } from "lucide-react"
+import { Activity, Table2, Box, List, History, Settings, ChevronsLeft, ChevronsRight, Braces, Code2, BookOpen, Terminal, Play, ChevronDown, ChevronRight, Layers, Info } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "@/context/I18nContext"
 import { useState, useEffect } from "react"
+import { APP_VERSION } from "@/lib/version"
 
 const mainItems = [
   { id: "health", key: "nav.health", icon: Activity, path: "/health" },
@@ -14,6 +15,7 @@ const mainItems = [
 const bottom = [
   { id: "history", key: "nav.history", icon: History, path: "/history" },
   { id: "settings", key: "nav.settings", icon: Settings, path: "/settings" },
+  { id: "info", key: "nav.info", icon: Info, path: "/info" },
 ]
 
 const apiSubItems = [
@@ -188,7 +190,21 @@ export default function LeftNav() {
         )}
       </nav>
 
-      <div className="p-2 border-t border-[#3B3A36]/50">
+      <div className="px-2 py-2 border-t border-[#3B3A36]/50">
+        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} px-2.5 py-1.5 rounded-[6px] bg-[#1D1C1A] border border-[#3B3A36]/60`}>
+          {!collapsed ? (
+            <>
+              <span className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-[#85837E]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" /> v{APP_VERSION}
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#292824] border border-[#3B3A36] text-[#66645F] font-mono">Deck</span>
+            </>
+          ) : (
+            <span className="text-[10px] font-mono font-medium text-[#85837E]" title={`Deck v${APP_VERSION}`}>v{APP_VERSION}</span>
+          )}
+        </div>
+      </div>
+      <div className="p-2 pt-0">
         <button onClick={() => setCollapsed(v=> !v)} className={`flex items-center gap-2 px-3 py-2 text-[13px] text-[#B7B5B0] hover:text-[#F0EFEC] w-full ${collapsed ? "justify-center" : ""}`}>
           {collapsed ? <ChevronsRight className="w-4 h-4" /> : <><ChevronsLeft className="w-4 h-4" />{t("nav.collapse")}</>}
         </button>

@@ -14,6 +14,7 @@ import ApiPlayground from "@/pages/api/ApiPlayground"
 import ConnectPage from "@/pages/ConnectPage"
 import SettingsPage from "@/pages/SettingsPage"
 import HistoryPage from "@/pages/HistoryPage"
+import InfoPage from "@/pages/InfoPage"
 import RequireConnection from "@/components/RequireConnection"
 import { Toaster } from "sonner"
 
@@ -44,6 +45,7 @@ function AppInner() {
             <Route path="/api/*" element={<Navigate to="/api" replace />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/info" element={<InfoPage />} />
             <Route path="*" element={<Navigate to="/connect" replace />} />
           </Routes>
         </BrowserRouter>

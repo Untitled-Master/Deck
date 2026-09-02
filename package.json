@@ -1,7 +1,7 @@
 {
   "name": "react-vite-shadcn-tailwind",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently -n server,vite -c dim,cyan \"npm run dev:server\" \"npm run dev:vite\"",

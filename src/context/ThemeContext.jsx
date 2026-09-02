@@ -2,13 +2,14 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 
 const ThemeContext = createContext(null)
 
+const THEME_IDS = ["light", "dark", "system", "vercel", "github", "pink", "supabase", "claude"]
 function getStoredTheme() {
   try {
     const raw = localStorage.getItem("deck:settings")
     if (raw) {
       const j = JSON.parse(raw)
       const t = j?.theme
-      if (t === "light" || t === "dark" || t === "system") return t
+      if (THEME_IDS.includes(t)) return t
     }
   } catch {}
   return "dark"
@@ -25,6 +26,11 @@ function getSystemTheme() {
 
 function getEffectiveTheme(stored) {
   if (stored === "system") return getSystemTheme()
+  if (stored === "vercel") return "vercel"
+  if (stored === "github") return "github"
+  if (stored === "pink") return "pink"
+  if (stored === "supabase") return "supabase"
+  if (stored === "claude") return "claude"
   return stored === "light" ? "light" : "dark"
 }
 
@@ -71,11 +77,11 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     try {
       const root = document.documentElement
-      root.classList.remove("light", "dark")
+      root.classList.remove("light", "dark", "vercel", "github", "pink", "supabase", "claude")
       root.classList.add(effective)
       root.setAttribute("data-theme", effective)
-      // also set color-scheme for native UI
-      root.style.colorScheme = effective
+      // also set color-scheme for native UI (vercel/github/pink/supabase/claude are dark)
+      root.style.colorScheme = effective === "light" ? "light" : "dark"
     } catch {}
   }, [effective])
 

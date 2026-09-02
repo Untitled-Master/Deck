@@ -5,11 +5,12 @@ import Google from "@/components/icons/Google"
 import {
   Settings, Shield, Palette, Code2, Database, Bell, Trash2,
   Download, Upload, LogOut, Check, X, RefreshCw, Lock, Eye, EyeOff,
-  Globe, Monitor, Moon, Sun, Languages, SlidersHorizontal, KeyRound, History, Info, Loader2, Sparkles, Zap, FileJson, BadgeCheck, CheckCircle, ChevronDown, RotateCcw, Search, Paintbrush, Layers
+  Globe, Monitor, Moon, Sun, Languages, SlidersHorizontal, KeyRound, History, Info, Loader2, Sparkles, Zap, FileJson, BadgeCheck, CheckCircle, ChevronDown, RotateCcw, Search, Paintbrush, Layers, Github
 } from "lucide-react"
 import { toast } from "sonner"
 import { MONACO_THEMES, getThemeBg, getThemeLabel } from "@/lib/monacoThemes"
 import { useTranslation } from "@/context/I18nContext"
+import { APP_VERSION } from "@/lib/version"
 
 // ---------- localStorage keys ----------
 const LS_SETTINGS = "deck:settings"
@@ -94,8 +95,8 @@ function Toggle({ checked, onChange, disabled }) {
 
 function SectionCard({ icon: Icon, title, desc, children, action }) {
   return (
-    <div className="border border-[#3B3A36] rounded-[10px] bg-[#292824] overflow-hidden">
-      <div className="px-5 py-4 flex items-start justify-between gap-4 border-b border-[#3B3A36] bg-[#292824]">
+    <div className="border border-[#3B3A36] rounded-[10px] bg-[#292824] overflow-visible">
+      <div className="px-5 py-4 flex items-start justify-between gap-4 border-b border-[#3B3A36] bg-[#292824] rounded-t-[10px]">
         <div className="flex gap-3">
           <div className="w-9 h-9 rounded-[8px] bg-[#1D1C1A] border border-[#3B3A36] flex items-center justify-center shrink-0 mt-0.5">
             <Icon className="w-4 h-4 text-[#B7B5B0]" />
@@ -107,7 +108,7 @@ function SectionCard({ icon: Icon, title, desc, children, action }) {
         </div>
         {action}
       </div>
-      <div className="p-5 space-y-5 bg-[#292824]">{children}</div>
+      <div className="p-5 space-y-5 bg-[#292824] rounded-b-[10px]">{children}</div>
     </div>
   )
 }
@@ -237,7 +238,7 @@ export default function SettingsPage() {
       const label = labelMap[path] || path
       let valueLabel = String(value)
       if (path === "language") valueLabel = value === "fr" ? t("settings.general.french") : t("settings.general.english")
-      else if (path === "theme") valueLabel = value === "dark" ? t("settings.general.dark") : value === "light" ? t("settings.general.light") : t("settings.general.system")
+      else if (path === "theme") valueLabel = value === "dark" ? t("settings.general.dark") : value === "light" ? t("settings.general.light") : value === "vercel" ? "Vercel" : value === "github" ? "GitHub" : value === "pink" ? "Pink" : value === "supabase" ? "Supabase" : value === "claude" ? "Claude Code" : t("settings.general.system")
       else if (path === "editor.defaultLimit") valueLabel = `${value} ${t("settings.editor.rowsSuffix")}`
       else if (path === "editor.monacoTheme") { try { valueLabel = getThemeLabel(value) } catch { valueLabel = String(value) } }
       else if (path === "editor.fontSize") valueLabel = `${value}px`
@@ -526,16 +527,34 @@ export default function SettingsPage() {
                 />
               </Row>
               <Row label={t("settings.general.themeLabel")} hint={t("settings.general.themeHint")}>
-                <div className="flex items-center gap-1 p-1 bg-[#1D1C1A] border border-[#3B3A36] rounded-[7px]">
-                  {[
-                    { id: "dark", label: t("settings.general.dark"), icon: Moon },
-                    { id: "light", label: t("settings.general.light"), icon: Sun },
-                    { id: "system", label: t("settings.general.system"), icon: Monitor },
-                  ].map(o => (
-                    <button key={o.id} onClick={()=> update("theme", o.id)} className={`h-7 px-3 rounded-[6px] text-[12px] font-medium flex items-center gap-1.5 ${settings.theme===o.id ? "bg-[#292824] border border-[#3B3A36] text-[#F0EFEC]" : "text-[#85837E] hover:text-[#B7B5B0]"}`}>
-                      <o.icon className="w-3.5 h-3.5" /> {o.label}
-                    </button>
-                  ))}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-1 p-1 bg-[#1D1C1A] border border-[#3B3A36] rounded-[7px]">
+                    {[
+                      { id: "dark", label: t("settings.general.dark"), icon: Moon },
+                      { id: "light", label: t("settings.general.light"), icon: Sun },
+                      { id: "system", label: t("settings.general.system"), icon: Monitor },
+                    ].map(o => (
+                      <button key={o.id} onClick={()=> update("theme", o.id)} className={`h-7 px-3 rounded-[6px] text-[12px] font-medium flex items-center gap-1.5 ${settings.theme===o.id ? "bg-[#292824] border border-[#3B3A36] text-[#F0EFEC]" : "text-[#85837E] hover:text-[#B7B5B0]"}`}>
+                        <o.icon className="w-3.5 h-3.5" /> {o.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] tracking-wide text-[#66645F] hidden sm:inline">or</span>
+                    <CustomSelect
+                      value={["vercel","github","pink","supabase","claude"].includes(settings.theme) ? settings.theme : "__none__"}
+                      onChange={v => update("theme", v === "__none__" ? "dark" : v)}
+                      options={[
+                        { value: "__none__", label: "Custom theme" },
+                        { value: "vercel", label: "Vercel" },
+                        { value: "github", label: "GitHub" },
+                        { value: "pink", label: "Pink" },
+                        { value: "supabase", label: "Supabase" },
+                        { value: "claude", label: "Claude Code" },
+                      ]}
+                      width="w-[170px]"
+                    />
+                  </div>
                 </div>
               </Row>
             </SectionCard>
@@ -697,7 +716,7 @@ export default function SettingsPage() {
 
             {/* Danger zone footer */}
             <div className="mt-6 border border-[#3B3A36]/60 rounded-[9px] bg-[#1D1C1A]/50 px-4 py-3 flex items-center justify-between">
-              <div className="text-[11px] text-[#85837E]">Deck • PostgreSQL on deck • <span className="font-mono text-[#66645F]">v0.2.0</span> • <a className="text-[#4A90E2] hover:underline" href="#">{t("settings.footer.docs")}</a> • <a className="text-[#4A90E2] hover:underline" href="#">{t("settings.footer.changelog")}</a></div>
+              <div className="text-[11px] text-[#85837E]">Deck • PostgreSQL on deck • <span className="font-mono text-[#66645F]">v{APP_VERSION}</span> • <a className="text-[#4A90E2] hover:underline" href="#">{t("settings.footer.docs")}</a> • <a className="text-[#4A90E2] hover:underline" href="#">{t("settings.footer.changelog")}</a></div>
               <div className="text-[11px] text-[#66645F] hidden md:block">{t("settings.footer.crafted")}</div>
             </div>
           </div>
