@@ -286,7 +286,7 @@ export const fr = {
     githubButton: "GitHub — Untitled-Master/Deck",
     star: "Star",
     localFirst: "Local-first • pas de télémétrie sauf opt-in",
-    stack: "React + Vite + Tailwind + Monaco + Express + pg",
+    stackLine: "React + Vite + Tailwind + Monaco + Express + pg",
     crafted: "conçu pour les développeurs qui vivent dans les tables.",
     vision: {
       title: "Vision",

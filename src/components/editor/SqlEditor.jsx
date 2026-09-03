@@ -183,6 +183,7 @@ export default function SqlEditor({ query, setQuery, onRun, isRunning }) {
   const { connected } = useConnection()
   const schemaMapRef = useRef(new Map())
   const hoverDisposablesRef = useRef([])
+  const completionDisposablesRef = useRef([])
   const unknownTablesRef = useRef(new Set())
   const isAutoCapitalizingRef = useRef(false)
   const [monacoReady, setMonacoReady] = useState(0)
@@ -400,6 +401,140 @@ export default function SqlEditor({ query, setQuery, onRun, isRunning }) {
     }
   }, [schemaTick, connected, monacoReady])
 
+  // register Monaco completion provider for table/column names (schema-aware autocomplete)
+  useEffect(() => {
+    const monaco = monacoRef.current
+    if (!monaco) return
+    completionDisposablesRef.current.forEach(d => { try { d.dispose() } catch {} })
+    completionDisposablesRef.current = []
+    if (!autocomplete) return
+
+    const TABLE_CONTEXT = new Set(["from", "join", "into", "update", "table", "delete", "truncate"])
+    const COLUMN_CONTEXT = new Set(["select", "where", "and", "or", "on", "set", "having", "order", "group", "by", "distinct", "as"])
+    const SQL_KEYWORDS = ["SELECT", "FROM", "WHERE", "LIMIT", "OFFSET", "JOIN", "LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "ON", "AND", "OR", "NOT", "IN", "ORDER BY", "GROUP BY", "HAVING", "DISTINCT", "UNION", "INSERT INTO", "UPDATE", "DELETE FROM", "CREATE TABLE", "VALUES", "SET", "AS", "ASC", "DESC", "COUNT", "SUM", "AVG", "MIN", "MAX", "RETURNING", "EXPLAIN", "BEGIN", "COMMIT", "ROLLBACK"]
+
+    // alias -> real table name from FROM/JOIN clauses typed so far
+    const parseAliases = (text) => {
+      const aliases = new Map()
+      const re = /\b(?:from|join)\s+([A-Za-z_][A-Za-z0-9_$]*)(?:\s+(?:as\s+)?([A-Za-z_][A-Za-z0-9_$]*))?/gi
+      let m
+      while ((m = re.exec(text)) !== null) {
+        const table = m[1]
+        aliases.set(table.toLowerCase(), table)
+        if (m[2] && !/^(where|join|left|right|inner|outer|full|cross|on|group|order|limit|offset|having|union|select|limit)$/i.test(m[2])) {
+          aliases.set(m[2].toLowerCase(), table)
+        }
+      }
+      return aliases
+    }
+
+    const resolveTable = (name, aliases) => {
+      const lower = String(name).toLowerCase()
+      const real = aliases.get(lower) ?? name
+      return schemaMapRef.current.get(String(real).toLowerCase()) ?? schemaMapRef.current.get(lower) ?? null
+    }
+
+    const colSuggestion = (entry, c, range, sortPrefix) => {
+      const colName = c.column ?? c.name ?? String(c)
+      const colType = c.type ?? c.udtName ?? ""
+      return {
+        label: colName,
+        kind: monaco.languages.CompletionItemKind.Field,
+        insertText: colName,
+        detail: `${entry.name} • ${colType}`,
+        sortText: `${sortPrefix}${colName.toLowerCase()}`,
+        range,
+      }
+    }
+
+    const provider = {
+      triggerCharacters: ["."],
+      provideCompletionItems: (model, position) => {
+        const wordInfo = model.getWordAtPosition(position)
+        const range = wordInfo
+          ? new monaco.Range(position.lineNumber, wordInfo.startColumn, position.lineNumber, wordInfo.endColumn)
+          : new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column)
+
+        const tables = [...schemaMapRef.current.values()]
+        if (!tables.length) return { suggestions: [] }
+
+        const textBefore = model.getValueInRange(new monaco.Range(1, 1, position.lineNumber, position.column))
+
+        // table.column or alias.column case — suggest that table's columns
+        const dotMatch = textBefore.match(/([A-Za-z_][A-Za-z0-9_$]*)\.([A-Za-z_][A-Za-z0-9_$]*)?$/)
+        if (dotMatch) {
+          const entry = resolveTable(dotMatch[1], parseAliases(textBefore))
+          if (!entry) return { suggestions: [] }
+          return { suggestions: (entry.columns || []).map(c => colSuggestion(entry, c, range, "0_")) }
+        }
+
+        const trimmed = textBefore.replace(/\s+$/, "")
+        const lastWordMatch = trimmed.match(/([A-Za-z_][A-Za-z0-9_$]*)$/)
+        const lastWord = lastWordMatch ? lastWordMatch[1].toLowerCase() : ""
+        const lastChar = trimmed.slice(-1)
+        const inTableCtx = TABLE_CONTEXT.has(lastWord)
+        const inColumnCtx = !inTableCtx && (COLUMN_CONTEXT.has(lastWord) || [",", "(", "="].includes(lastChar))
+
+        const suggestions = []
+        if (inTableCtx || !inColumnCtx) {
+          const p = inTableCtx ? "0_" : "1_"
+          tables.forEach(t => {
+            suggestions.push({
+              label: t.name,
+              kind: monaco.languages.CompletionItemKind.Class,
+              insertText: t.name,
+              detail: `table • ${(t.columns || []).length} columns`,
+              sortText: `${p}${t.name.toLowerCase()}`,
+              range,
+            })
+          })
+        }
+        if (inColumnCtx || !inTableCtx) {
+          const p = inColumnCtx ? "0_" : "2_"
+          const aliases = parseAliases(textBefore)
+          const refNames = new Set([...aliases.values()].map(n => String(n).toLowerCase()))
+          const refTables = refNames.size
+            ? [...refNames].map(n => schemaMapRef.current.get(n)).filter(Boolean)
+            : tables
+          const seen = new Set()
+          refTables.forEach(entry => {
+            (entry.columns || []).forEach(c => {
+              const colName = c.column ?? c.name ?? String(c)
+              if (seen.has(colName.toLowerCase())) return
+              seen.add(colName.toLowerCase())
+              suggestions.push(colSuggestion(entry, c, range, p))
+            })
+          })
+        }
+        if (!inTableCtx && !inColumnCtx) {
+          SQL_KEYWORDS.forEach(k => {
+            suggestions.push({
+              label: k,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              insertText: k,
+              sortText: `3_${k.toLowerCase()}`,
+              range,
+            })
+          })
+        }
+        return { suggestions }
+      },
+    }
+
+    try {
+      ;["sql", "pgsql", "postgres"].forEach(lang => {
+        try {
+          completionDisposablesRef.current.push(monaco.languages.registerCompletionItemProvider(lang, provider))
+        } catch {}
+      })
+    } catch {}
+
+    return () => {
+      completionDisposablesRef.current.forEach(d => { try { d.dispose() } catch {} })
+      completionDisposablesRef.current = []
+    }
+  }, [schemaTick, connected, monacoReady, autocomplete])
+
   const handleBeforeMount = (monaco) => {
     defineDeckThemes(monaco)
     monacoRef.current = monaco
@@ -433,10 +568,11 @@ export default function SqlEditor({ query, setQuery, onRun, isRunning }) {
     } catch {}
   }
 
-  // cleanup hover providers on unmount
+  // cleanup hover + completion providers on unmount
   useEffect(() => {
     return () => {
       hoverDisposablesRef.current.forEach(d => { try { d.dispose() } catch {} })
+      completionDisposablesRef.current.forEach(d => { try { d.dispose() } catch {} })
     }
   }, [])
 

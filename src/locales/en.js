@@ -286,7 +286,7 @@ export const en = {
     githubButton: "GitHub — Untitled-Master/Deck",
     star: "Star",
     localFirst: "Local-first • no telemetry unless you opt-in",
-    stack: "React + Vite + Tailwind + Monaco + Express + pg",
+    stackLine: "React + Vite + Tailwind + Monaco + Express + pg",
     crafted: "crafted for developers who live in tables.",
     vision: {
       title: "Vision",

@@ -42,7 +42,7 @@ export default function InfoPage() {
               <div className="px-6 md:px-8 py-3 bg-[#1D1C1A] border-t border-[#3B3A36] flex flex-wrap items-center gap-3 text-[11px] text-[#85837E]">
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" /> {t("info.localFirst")}</span>
                 <span className="hidden md:inline w-1 h-1 rounded-full bg-[#3B3A36]" />
-                <span>{t("info.stack")}</span>
+                <span>{t("info.stackLine")}</span>
                 <span className="ml-auto font-mono text-[#66645F]">{t("info.crafted")}</span>
               </div>
             </div>
@@ -125,7 +125,7 @@ export default function InfoPage() {
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="border border-[#3B3A36] rounded-[10px] bg-[#292824] overflow-visible">
                 <div className="px-5 py-4 flex items-center gap-3 border-b border-[#3B3A36] bg-[#292824] rounded-t-[10px]">
-                  <div className="w-9 h-9 rounded-full bg-[#1D1C1A] border border-[#3B3A36] flex items-center justify-center shrink-0 text-[14px] font-semibold text-[#F0EFEC]">BA</div>
+                  <img src="https://avatars.githubusercontent.com/u/128633214?s=400&u=84e3532bbac85ae87daa6979bcb079c3ba53348a&v=4" alt={t("info.creator.name")} className="w-9 h-9 rounded-full bg-[#1D1C1A] border border-[#3B3A36] object-cover shrink-0" />
                   <div>
                     <h3 className="text-[14px] font-semibold text-[#F0EFEC] leading-none">{t("info.creator.title")}</h3>
                     <p className="text-[12px] text-[#85837E] mt-1">{t("info.creator.subtitle")}</p>

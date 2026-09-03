@@ -17,6 +17,15 @@ function uid() {
   return Math.random().toString(36).slice(2, 9)
 }
 
+// table list only changes on DDL — tell the Sidebar to refresh its cache
+function notifyTablesChanged(sql) {
+  try {
+    if (/\b(create|drop|alter)\s+(table|view|index|schema|sequence|database)\b/i.test(sql)) {
+      window.dispatchEvent(new Event("deck:tables:invalidate"))
+    }
+  } catch {}
+}
+
 function loadTabs() {
   try {
     const raw = localStorage.getItem(LS_TABS)
@@ -160,6 +169,7 @@ export default function SqlPage() {
         const res = await api.query(query)
         const arr = res.results ?? (res.rows ? [{ ...res, sql: query }] : [])
         setResultsMap(m=> ({ ...m, [activeTab.id]: { results: arr, totalDuration: res.duration ?? arr.reduce((a,b)=>a+(b.duration||0),0), lastRun: new Date().toLocaleTimeString(), queryError: "" } }))
+        notifyTablesChanged(query)
       } catch (err) {
         const arr = err.data?.results || []
         const msg = (err.message||"Query failed") + (err.data?.failedSql ? ` — failed at: ${err.data.failedSql.slice(0,100)}` : "")

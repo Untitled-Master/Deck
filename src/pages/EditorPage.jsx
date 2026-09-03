@@ -32,6 +32,15 @@ function isDestructiveSql(sql) {
   } catch { return /\b(delete|drop|truncate)\b/i.test(sql) }
 }
 
+// table list only changes on DDL — tell the Sidebar to refresh its cache
+function notifyTablesChanged(sql) {
+  try {
+    if (/\b(create|drop|alter)\s+(table|view|index|schema|sequence|database)\b/i.test(sql)) {
+      window.dispatchEvent(new Event("deck:tables:invalidate"))
+    }
+  } catch {}
+}
+
 const LS_TABLE_KEY = "deck:selectedTable"
 const LS_TAB_KEY = "deck:activeTab"
 const VALID_TABS = ["data", "structure", "relations"]
@@ -171,6 +180,7 @@ export default function EditorPage() {
         const res = await api.query(query)
         const arr = res.results ?? (res.rows ? [{ ...res, sql: query }] : [])
         setResults(arr); setTotalDuration(res.duration ?? arr.reduce((a,b)=>a+(b.duration||0),0)); setLastRun(new Date().toLocaleTimeString())
+        notifyTablesChanged(query)
       } catch (err) {
         if (err.data?.results?.length) { setResults(err.data.results); setTotalDuration(err.data.duration ?? 0) } else setResults(null)
         setQueryError((err.message||"Query failed") + (err.data?.failedSql ? ` — failed at: ${err.data.failedSql.slice(0,100)}` : ""))

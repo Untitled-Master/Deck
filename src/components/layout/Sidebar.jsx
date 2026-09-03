@@ -1,40 +1,86 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Search, Plus, Box } from "lucide-react"
+import { Search, Database } from "lucide-react"
 import { useConnection } from "@/context/ConnectionContext"
 import { api } from "@/lib/api"
-import { FAKE_TABLES } from "@/lib/fakeData"
 
-const MOCK_TABLES = FAKE_TABLES
+export const TABLES_INVALIDATE_EVENT = "deck:tables:invalidate"
+const cacheKey = (db) => `deck:tables:${db}`
+
+function readCache(db) {
+  try {
+    const raw = localStorage.getItem(cacheKey(db))
+    if (!raw) return []
+    const j = JSON.parse(raw)
+    return Array.isArray(j.tables) ? j.tables : []
+  } catch { return [] }
+}
 
 export default function Sidebar({ selectedTable, onSelectTable, search, setSearch }) {
-  const { connected } = useConnection()
+  const { connected, config } = useConnection()
+  const dbName = config?.database || null
   const navigate = useNavigate()
-  const [tables, setTables] = useState(MOCK_TABLES)
+  // lazy-init from per-db cache so first paint already has rows — no empty flash on page switches
+  const [tables, setTables] = useState(() => (connected && dbName ? readCache(dbName) : []))
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState("")
+  const [refreshKey, setRefreshKey] = useState(0)
+  // refs so the fetch effect doesn't re-run on every parent render
+  const selRef = useRef(selectedTable)
+  selRef.current = selectedTable
+  const selectRef = useRef(onSelectTable)
+  selectRef.current = onSelectTable
 
-  const fetchTables = async () => {
-    if (!connected) { setTables(MOCK_TABLES); return }
-    setLoading(true)
-    try {
-      const res = await api.tables()
-      const mapped = res.tables.map(t => ({ name: t.name, rows: t.estimatedRows, type: t.type }))
-      setTables(mapped.length ? mapped : MOCK_TABLES)
-      if (mapped.length && !mapped.find(x => x.name === selectedTable)) onSelectTable(mapped[0].name)
-    } catch { setTables(MOCK_TABLES) } finally { setLoading(false) }
+  useEffect(() => {
+    if (!connected || !dbName) {
+      setTables([])
+      setLoadError("")
+      setLoading(false)
+      return
+    }
+    // instant render from per-db cache (no-op if lazy init already populated), then refresh silently in background
+    setTables(prev => (prev.length ? prev : readCache(dbName)))
+    setLoadError("")
+    let cancelled = false
+    setLoading(refreshKey > 0)
+    ;(async () => {
+      try {
+        const res = await api.tables()
+        if (cancelled) return
+        const mapped = (res.tables || []).map(t => ({ name: t.name, rows: t.estimatedRows, type: t.type }))
+        setTables(mapped)
+        try { localStorage.setItem(cacheKey(dbName), JSON.stringify({ at: Date.now(), tables: mapped })) } catch {}
+        if (mapped.length && !mapped.find(x => x.name === selRef.current)) selectRef.current(mapped[0].name)
+      } catch (e) {
+        if (cancelled) return
+        // keep stale cache visible; only surface the error when there's nothing to show
+        if (!readCache(dbName).length) setLoadError(e.message || "Couldn't load tables")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    const onInvalidate = () => setRefreshKey(k => k + 1)
+    window.addEventListener(TABLES_INVALIDATE_EVENT, onInvalidate)
+    return () => {
+      cancelled = true
+      window.removeEventListener(TABLES_INVALIDATE_EVENT, onInvalidate)
+    }
+  }, [connected, dbName, refreshKey])
+
+  const refresh = () => {
+    if (!connected) return
+    setRefreshKey(k => k + 1)
   }
-
-  useEffect(() => { fetchTables() }, [connected])
   const filtered = tables.filter(t => t.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <aside className="w-[330px] shrink-0 bg-[#292824] border-r border-[#3B3A36] flex flex-col overflow-hidden">
-      {/* Database selector */}
+      {/* Database pill */}
       <div className="p-[14px]">
         <button className="w-full h-10 flex items-center justify-between px-3 bg-[#292824] border border-[#4A4944] rounded-[7px] hover:bg-[#232220] transition-colors">
           <span className="flex items-center gap-2 text-[13px] font-medium text-[#F0EFEC]">
-            <Box className="w-4 h-4 text-[#B7B5B0]" />
-            public
+            <Database className="w-4 h-4 text-[#B7B5B0]" />
+            {dbName ?? "Not connected"}
           </span>
           <span className="text-[#85837E] text-[12px]">⌄</span>
         </button>
@@ -67,20 +113,17 @@ export default function Sidebar({ selectedTable, onSelectTable, search, setSearc
               </button>
             )
           })}
-          {!filtered.length && <div className="text-[13px] text-[#85837E] px-2 py-3">No tables</div>}
+          {!connected && <div className="text-[13px] text-[#85837E] px-2 py-3">Not connected — connect to browse tables.</div>}
+          {connected && loading && !filtered.length && <div className="text-[13px] text-[#85837E] px-2 py-3">Loading…</div>}
+          {connected && !loading && loadError && !filtered.length && <div className="text-[13px] text-[#EF4444] px-2 py-3">{loadError}</div>}
+          {connected && !loading && !loadError && !filtered.length && <div className="text-[13px] text-[#85837E] px-2 py-3">{search ? `No tables match "${search}".` : "No tables in this database."}</div>}
         </div>
-
-        <button className="mt-4 flex items-center gap-1.5 px-2 text-[13px] font-medium text-[#4A90E2] hover:text-[#6aa8f0]">
-          <Plus className="w-4 h-4" /> Create Table
-        </button>
       </div>
 
       <div className="p-3 border-t border-[#3B3A36] flex items-center justify-between">
         <span className="text-[11px] text-[#85837E]">{loading ? "Loading…" : `${tables.length} tables`}</span>
-        <button onClick={fetchTables} className="text-[11px] text-[#B7B5B0] hover:text-[#F0EFEC]">Refresh</button>
+        <button onClick={refresh} className="text-[11px] text-[#B7B5B0] hover:text-[#F0EFEC]">Refresh</button>
       </div>
     </aside>
   )
 }
-
-export { MOCK_TABLES }
