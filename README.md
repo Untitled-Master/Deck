@@ -66,6 +66,30 @@ host=localhost  port=5432  database=mydb  user=postgres  password=280823
 
 ## Installation & Launch
 
+### Option A — run the published tool (no clone needed)
+
+```bash
+npx deckdb
+# → starts Deck on http://localhost:3001 and opens it in your browser
+```
+
+Other flags:
+
+```bash
+npx deckdb --port 4000   # serve on a different port
+npx deckdb --no-open     # don't auto-open the browser
+PORT=4000 npx deckdb     # same, via environment variable
+```
+
+Or install it globally once:
+
+```bash
+npm i -g deckdb
+deckdb
+```
+
+### Option B — run from source
+
 ```bash
 # 1 — Clone
 git clone https://github.com/Untitled-Master/Deck.git
@@ -74,13 +98,13 @@ cd Deck
 # 2 — Install
 npm install
 
-# 3 — Run in development (API on :3001 + Vite on :5173)
+# 3 — Launch the tool (production build + single-port server)
+npm run deck
+# → http://localhost:3001
+
+# 4 — Or run in development (API on :3001 + Vite on :5173)
 npm run dev
 # → http://localhost:5173
-
-# 4 — Production build + single-port server
-npm start
-# → http://localhost:3001
 ```
 
 Other commands:
@@ -88,6 +112,7 @@ Other commands:
 ```bash
 npm run dev:vite    # Vite only
 npm run dev:server  # API only (node server/index.js)
+npm run deck        # CLI launcher (node bin/deck.js)
 npm run build       # vite build → dist/
 npm run preview     # vite preview
 npm run lint        # eslint
@@ -100,7 +125,7 @@ PORT=3001
 VITE_API_URL=http://localhost:3001
 ```
 
-> `npx deck` is reserved for the published package — it will run the production server after `npm run build`.
+> Publishing to npm: `npm run prepack` rebuilds `dist/` automatically, and the published `files` include `bin/`, `server/` and `dist/` — so `npx deckdb` works out of the box.
 
 ---
 

@@ -1,15 +1,42 @@
 {
-  "name": "react-vite-shadcn-tailwind",
-  "private": true,
+  "name": "deckdb",
   "version": "0.2.0",
+  "description": "Deck — local-first PostgreSQL IDE. Launch with `deckdb` and manage Postgres from your browser.",
+  "license": "MIT",
   "type": "module",
+  "bin": {
+    "deckdb": "bin/deck.js",
+    "deck": "bin/deck.js"
+  },
+  "files": [
+    "bin/",
+    "server/",
+    "dist/",
+    "public/deck-logo.svg",
+    "README.md",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "postgres",
+    "postgresql",
+    "sql",
+    "database",
+    "ide",
+    "admin",
+    "local-first"
+  ],
   "scripts": {
     "dev": "concurrently -n server,vite -c dim,cyan \"npm run dev:server\" \"npm run dev:vite\"",
     "dev:vite": "vite",
     "dev:server": "node server/index.js",
     "dev:all": "concurrently -n server,vite -c dim,cyan \"npm run dev:server\" \"npm run dev:vite\"",
     "build": "vite build",
+    "prepack": "npm run build",
     "start": "npm run build && node server/index.js",
+    "deck": "node bin/deck.js",
     "server": "node server/index.js",
     "preview": "vite preview",
     "lint": "eslint ."
