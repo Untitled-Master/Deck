@@ -40,10 +40,10 @@ export default function LeftNav() {
       const raw = localStorage.getItem("deck:settings")
       if (raw) {
         const j = JSON.parse(raw)
-        return j?.navigation?.showApi ?? true
+        return j?.navigation?.showApi ?? false
       }
     } catch {}
-    return true
+    return false
   })
   useEffect(() => { try { localStorage.setItem("deck:leftNav:collapsed", String(collapsed)) } catch {} }, [collapsed])
   useEffect(() => { try { localStorage.setItem("deck:api:open", String(apiOpen)) } catch {} }, [apiOpen])
@@ -53,9 +53,9 @@ export default function LeftNav() {
         const raw = localStorage.getItem("deck:settings")
         if (raw) {
           const j = JSON.parse(raw)
-          setShowApi(j?.navigation?.showApi ?? true)
-        } else setShowApi(true)
-      } catch { setShowApi(true) }
+          setShowApi(j?.navigation?.showApi ?? false)
+        } else setShowApi(false)
+      } catch { setShowApi(false) }
     }
     sync()
     const onStorage = (e) => { if (!e.key || e.key === "deck:settings") sync() }

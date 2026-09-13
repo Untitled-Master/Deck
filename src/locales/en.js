@@ -81,7 +81,7 @@ export const en = {
   },
   settings: {
     title: "Settings",
-    subtitle: "Manage Deck preferences, editor behavior and cloud sync. Linked accounts save your data and settings to Google Drive — restore on any device.",
+    subtitle: "Manage Deck preferences and editor behavior. Everything is stored locally — no account needed.",
     export: "Export",
     import: "Import",
     google: {

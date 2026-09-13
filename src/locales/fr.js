@@ -81,7 +81,7 @@ export const fr = {
   },
   settings: {
     title: "Paramètres",
-    subtitle: "Gérez les préférences de Deck, le comportement de l’éditeur et la synchronisation cloud. Les comptes liés enregistrent vos données et paramètres sur Google Drive — restaurez sur n’importe quel appareil.",
+    subtitle: "Gérez les préférences de Deck et le comportement de l’éditeur. Tout est stocké localement — aucun compte requis.",
     export: "Exporter",
     import: "Importer",
     google: {

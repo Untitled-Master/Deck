@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react"
 import TopBar from "@/components/layout/TopBar"
 import LeftNav from "@/components/layout/LeftNav"
-import Google from "@/components/icons/Google"
 import {
-  Settings, Shield, Palette, Code2, Database, Bell, Trash2,
-  Download, Upload, LogOut, Check, X, RefreshCw, Lock, Eye, EyeOff,
-  Globe, Monitor, Moon, Sun, Languages, SlidersHorizontal, KeyRound, History, Info, Loader2, Sparkles, Zap, FileJson, BadgeCheck, CheckCircle, ChevronDown, RotateCcw, Search, Paintbrush, Layers, Github
+  Settings, Palette, Code2, Bell, Trash2,
+  Download, Upload, Check, X,
+  Globe, Monitor, Moon, Sun, Sparkles, FileJson, ChevronDown, RotateCcw, Search, Paintbrush, Layers
 } from "lucide-react"
 import { toast } from "sonner"
 import { MONACO_THEMES, getThemeBg, getThemeLabel } from "@/lib/monacoThemes"
@@ -14,9 +13,6 @@ import { APP_VERSION } from "@/lib/version"
 
 // ---------- localStorage keys ----------
 const LS_SETTINGS = "deck:settings"
-const LS_GOOGLE = "deck:googleAccount"
-const LS_LAST_SYNC = "deck:lastSyncAt"
-const LS_CLOUD = "deck:cloudBackup"
 const LS_TABLE = "deck:selectedTable"
 const LS_TAB = "deck:activeTab"
 
@@ -38,7 +34,7 @@ const DEFAULT_SETTINGS = {
     monacoTheme: "deck-dark",
   },
   sync: {
-    autoSync: true,
+    autoSync: false,
     includeQueries: true,
     includeConnections: false,
     includeSchemaLayout: true,
@@ -55,7 +51,7 @@ const DEFAULT_SETTINGS = {
     analytics: false,
   },
   navigation: {
-    showApi: true,
+    showApi: false,
   },
 }
 
@@ -168,18 +164,6 @@ function CustomSelect({ value, onChange, options, width = "w-[176px]" }) {
 export default function SettingsPage() {
   const { t } = useTranslation()
   const [settings, setSettings] = useState(() => loadSettings())
-  const [googleAccount, setGoogleAccount] = useState(() => {
-    try { const v = localStorage.getItem(LS_GOOGLE); return v ? JSON.parse(v) : null } catch { return null }
-  })
-  const [linking, setLinking] = useState(false)
-  const [syncing, setSyncing] = useState(false)
-  const [lastSynced, setLastSynced] = useState(() => {
-    try { return localStorage.getItem(LS_LAST_SYNC) } catch { return null }
-  })
-  const [cloudMeta, setCloudMeta] = useState(() => {
-    try { const v = localStorage.getItem(LS_CLOUD); return v ? JSON.parse(v) : null } catch { return null }
-  })
-  const [showUnlink, setShowUnlink] = useState(false)
   const [themeSearch, setThemeSearch] = useState("")
   const [resetEditorOpen, setResetEditorOpen] = useState(false)
   const fileRef = useRef(null)
@@ -189,19 +173,7 @@ export default function SettingsPage() {
   useEffect(() => {
     try { localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)) } catch {}
     try { window.dispatchEvent(new Event("deck:settings:update")) } catch {}
-    // auto-sync if linked & enabled
-    if (googleAccount && settings.sync.autoSync) {
-      const t = setTimeout(() => doSync(false), 800)
-      return () => clearTimeout(t)
-    }
   }, [settings])
-
-  useEffect(() => {
-    try {
-      if (googleAccount) localStorage.setItem(LS_GOOGLE, JSON.stringify(googleAccount))
-      else localStorage.removeItem(LS_GOOGLE)
-    } catch {}
-  }, [googleAccount])
 
   const update = (path, value) => {
     setSettings(s => {
@@ -248,60 +220,6 @@ export default function SettingsPage() {
     } catch {}
   }
 
-  const doSync = async (showToast = true) => {
-    if (!googleAccount) {
-      if (showToast) toast.error(t("toasts.linkFirst"))
-      return
-    }
-    setSyncing(true)
-    await new Promise(r => setTimeout(r, 1100))
-    try {
-      const payload = {
-        settings,
-        selectedTable: localStorage.getItem(LS_TABLE),
-        activeTab: localStorage.getItem(LS_TAB),
-        schema: (() => { try { return { zoom: localStorage.getItem("deck:schema:zoom"), offset: localStorage.getItem("deck:schema:offset"), positions: localStorage.getItem("deck:schema:positions") } } catch { return null } })(),
-        logsCount: (() => { try { const v = localStorage.getItem("deck:api:logs"); return v ? JSON.parse(v).length : 0 } catch { return 0 } })(),
-      }
-      const meta = { payload, syncedAt: new Date().toISOString(), bytes: JSON.stringify(payload).length, account: googleAccount.email }
-      localStorage.setItem(LS_CLOUD, JSON.stringify(meta))
-      localStorage.setItem(LS_LAST_SYNC, meta.syncedAt)
-      setCloudMeta(meta)
-      setLastSynced(meta.syncedAt)
-      if (showToast) toast.success(t("toasts.syncedToDrive"))
-    } catch (e) {
-      if (showToast) toast.error(t("toasts.syncFailed") + ": " + e.message)
-    } finally { setSyncing(false) }
-  }
-
-  const handleLink = async () => {
-    setLinking(true)
-    await new Promise(r => setTimeout(r, 900))
-    const mock = {
-      id: "google_" + Math.random().toString(36).slice(2, 8),
-      name: "Alex Morgan",
-      email: "alex.morgan@gmail.com",
-      avatar: "https://i.pravatar.cc/150?img=12",
-      linkedAt: new Date().toISOString(),
-      provider: "google",
-    }
-    setGoogleAccount(mock)
-    setLinking(false)
-    toast.success(t("toasts.googleLinked"))
-    // initial sync
-    setTimeout(() => doSync(false), 400)
-  }
-
-  const handleUnlink = () => {
-    setGoogleAccount(null)
-    localStorage.removeItem(LS_CLOUD)
-    localStorage.removeItem(LS_LAST_SYNC)
-    setCloudMeta(null)
-    setLastSynced(null)
-    setShowUnlink(false)
-    toast.success(t("toasts.googleUnlinked"))
-  }
-
   const handleExport = () => {
     try {
       const data = {
@@ -309,12 +227,10 @@ export default function SettingsPage() {
         exportedAt: new Date().toISOString(),
         version: 1,
         settings,
-        googleAccount,
         state: {
           selectedTable: localStorage.getItem(LS_TABLE),
           activeTab: localStorage.getItem(LS_TAB),
         },
-        cloud: cloudMeta,
       }
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
       const url = URL.createObjectURL(blob)
@@ -337,7 +253,6 @@ export default function SettingsPage() {
       try {
         const j = JSON.parse(String(reader.result))
         if (j.settings) setSettings({ ...DEFAULT_SETTINGS, ...j.settings, editor: { ...DEFAULT_SETTINGS.editor, ...(j.settings.editor||{}) }, sync: { ...DEFAULT_SETTINGS.sync, ...(j.settings.sync||{}) }, notifications: { ...DEFAULT_SETTINGS.notifications, ...(j.settings.notifications||{}) }, privacy: { ...DEFAULT_SETTINGS.privacy, ...(j.settings.privacy||{}) } })
-        if (j.googleAccount) setGoogleAccount(j.googleAccount)
         if (j.state?.selectedTable) localStorage.setItem(LS_TABLE, j.state.selectedTable)
         if (j.state?.activeTab) localStorage.setItem(LS_TAB, j.state.activeTab)
         toast.success(t("toasts.settingsImported"))
@@ -356,13 +271,7 @@ export default function SettingsPage() {
         if (k && k.startsWith("deck:")) keepKeys.push(k)
       }
       keepKeys.forEach(k => localStorage.removeItem(k))
-      localStorage.removeItem(LS_CLOUD)
-      localStorage.removeItem(LS_LAST_SYNC)
-      localStorage.removeItem(LS_GOOGLE)
       setSettings(DEFAULT_SETTINGS)
-      setGoogleAccount(null)
-      setCloudMeta(null)
-      setLastSynced(null)
       toast.success(t("toasts.localCleared"))
     } catch (e) { toast.error(e.message) }
   }
@@ -378,9 +287,6 @@ export default function SettingsPage() {
     setResetEditorOpen(false)
     toast.success(t("toasts.editorReset"))
   }
-
-  const lastSyncedStr = lastSynced ? new Date(lastSynced).toLocaleString() : "Never"
-  const isLinked = !!googleAccount
 
   return (
     <div className="h-screen flex flex-col bg-[#292824] overflow-hidden">
@@ -409,111 +315,8 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Google Account — HERO */}
-            <div className="mt-7 border border-[#3B3A36] rounded-[12px] overflow-hidden bg-[#292824]">
-              <div className="bg-gradient-to-r from-[#1D1C1A] via-[#292824] to-[#1D1C1A] border-b border-[#3B3A36] px-5 py-4 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center p-1.5 shrink-0"><Google className="w-full h-full" /></div>
-                <div>
-                  <div className="text-[13px] font-semibold tracking-widest text-[#F0EFEC] flex items-center gap-2">{t("settings.google.title").toUpperCase()} <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${isLinked ? "bg-[rgba(34,197,94,0.12)] border-[#16803A] text-[#22C55E]" : "bg-[#1D1C1A] border-[#3B3A36] text-[#85837E]"}`}>{isLinked ? t("settings.google.linked").toUpperCase() : t("settings.google.notLinked").toUpperCase()}</span></div>
-                  <div className="text-[12.5px] text-[#B7B5B0]">{t("settings.google.subtitle")}</div>
-                </div>
-                {isLinked && (
-                  <span className="ml-auto hidden md:flex items-center gap-1.5 text-[11px] font-medium text-[#22C55E] bg-[rgba(34,197,94,0.08)] border border-[#16803A]/40 rounded-full px-2.5 py-1"><CheckCircle className="w-3.5 h-3.5" /> {t("settings.google.autoSyncOn")}</span>
-                )}
-              </div>
-
-              {!isLinked ? (
-                <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6 p-5 md:p-6">
-                  <div>
-                    <h3 className="text-[16px] font-semibold text-[#F0EFEC]">{t("settings.google.linkTitle")}</h3>
-                    <p className="text-[13px] text-[#B7B5B0] mt-1.5 leading-relaxed">{t("settings.google.linkDesc")}</p>
-                    <ul className="mt-4 space-y-2">
-                      {[
-                        t("settings.google.syncFeature1"),
-                        t("settings.google.syncFeature2"),
-                        t("settings.google.syncFeature3"),
-                        t("settings.google.syncFeature4"),
-                      ].map(feat => (
-                        <li key={feat} className="flex items-start gap-2 text-[13px] text-[#D6D4CF]"><span className="w-5 h-5 rounded-full bg-[rgba(34,197,94,0.12)] border border-[#16803A]/30 flex items-center justify-center shrink-0 mt-0.5"><Check className="w-3 h-3 text-[#22C55E]" /></span>{feat}</li>
-                      ))}
-                    </ul>
-                    <button
-                      onClick={handleLink}
-                      disabled={linking}
-                      className="mt-5 w-full md:w-auto h-10 px-5 bg-white hover:bg-[#f8f8f8] disabled:opacity-60 text-[#1D1C1A] rounded-[8px] text-[13px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
-                    >
-                      {linking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Google className="w-5 h-5" />}
-                      {linking ? t("settings.google.linking") : t("settings.google.continueWithGoogle")}
-                    </button>
-                    <p className="text-[11px] text-[#66645F] mt-2.5 flex items-center gap-1.5"><Lock className="w-3 h-3" /> {t("settings.google.privacy")}</p>
-                  </div>
-                  <div className="bg-[#1D1C1A] border border-[#3B3A36] rounded-[10px] p-4">
-                    <div className="text-[11px] tracking-widest font-medium text-[#85837E]">{t("settings.google.whatSaved")}</div>
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      {[
-                        { icon: Database, label: t("settings.google.tablesTabs"), sub: t("settings.google.tablesTabsSub") },
-                        { icon: Code2, label: "Editor", sub: t("settings.google.editorSub") },
-                        { icon: SlidersHorizontal, label: "Preferences", sub: t("settings.google.preferencesSub") },
-                        { icon: History, label: "Schema", sub: t("settings.google.schemaSub") },
-                      ].map(c => (
-                        <div key={c.label} className="bg-[#292824] border border-[#3B3A36] rounded-[8px] p-3">
-                          <c.icon className="w-4 h-4 text-[#B7B5B0]" />
-                          <div className="text-[12px] font-medium text-[#F0EFEC] mt-1.5">{c.label}</div>
-                          <div className="text-[11px] text-[#85837E]">{c.sub}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 text-[11px] text-[#85837E] bg-[#292824] border border-[#3B3A36] rounded-[6px] px-2.5 py-2"><Info className="w-3.5 h-3.5 shrink-0" /> {t("settings.google.localFirst")}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-5 md:p-6">
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <img src={googleAccount.avatar} alt="avatar" className="w-12 h-12 rounded-full border border-[#3B3A36] object-cover" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[14px] font-semibold text-[#F0EFEC] flex items-center gap-2">{googleAccount.name} <span className="w-4 h-4 rounded-full bg-[#4285F4] flex items-center justify-center"><Check className="w-2.5 h-2.5 text-white" /></span></div>
-                      <div className="text-[13px] text-[#B7B5B0] truncate">{googleAccount.email}</div>
-                      <div className="text-[11px] text-[#85837E] mt-0.5">{t("settings.google.linked")} {new Date(googleAccount.linkedAt).toLocaleDateString()} • Google Drive appDataFolder</div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => doSync(true)} disabled={syncing} className="h-9 px-4 bg-[#4A90E2] hover:bg-[#3a7bc8] disabled:opacity-60 text-white rounded-[7px] text-[13px] font-medium flex items-center gap-1.5">
-                        {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} {syncing ? t("settings.google.syncing") : t("settings.google.syncNow")}
-                      </button>
-                      <button onClick={() => setShowUnlink(true)} className="h-9 px-3.5 bg-[#1D1C1A] border border-[#3B3A36] rounded-[7px] text-[13px] font-medium text-[#B7B5B0] hover:text-[#F0EFEC] flex items-center gap-1.5"><LogOut className="w-4 h-4" /> {t("settings.google.unlink")}</button>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="bg-[#1D1C1A] border border-[#3B3A36] rounded-[8px] p-3">
-                      <div className="text-[11px] tracking-widest text-[#85837E]">{t("settings.google.lastSynced").toUpperCase()}</div>
-                      <div className="text-[13px] font-medium text-[#F0EFEC] mt-1">{lastSyncedStr}</div>
-                      <div className="text-[11px] text-[#85837E] flex items-center gap-1 mt-1"><Zap className="w-3 h-3" /> {cloudMeta ? `${(cloudMeta.bytes/1024).toFixed(1)} ${t("settings.google.pushed")}` : "—"}</div>
-                    </div>
-                    <div className="bg-[#1D1C1A] border border-[#3B3A36] rounded-[8px] p-3">
-                      <div className="text-[11px] tracking-widest text-[#85837E]">{t("settings.google.backupSize").toUpperCase()}</div>
-                      <div className="text-[13px] font-medium text-[#F0EFEC] mt-1">{cloudMeta ? (cloudMeta.bytes/1024).toFixed(1) + " KB" : "—"}</div>
-                      <div className="text-[11px] text-[#85837E] mt-1">{t("settings.google.drivePath")}</div>
-                    </div>
-                    <div className="bg-[#1D1C1A] border border-[#3B3A36] rounded-[8px] p-3">
-                      <div className="text-[11px] tracking-widest text-[#85837E]">{t("settings.google.itemsSaved").toUpperCase()}</div>
-                      <div className="text-[13px] font-medium text-[#F0EFEC] mt-1">6 keys</div>
-                      <div className="text-[11px] text-[#85837E] mt-1 truncate">{t("settings.google.keys")}</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-[#85837E]">
-                    <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> {t("settings.google.encrypted")}</span>
-                    <span className="w-1 h-1 rounded-full bg-[#3B3A36]" />
-                    <a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noreferrer" className="text-[#4A90E2] hover:underline">{t("settings.google.openDrive")}</a>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* spacer between Google account and General */}
-            <div className="h-8" />
-
             {/* General */}
+            <div className="mt-7">
             <SectionCard icon={Globe} title={t("settings.general.title")} desc={t("settings.general.desc")} >
               <Row label={t("settings.general.languageLabel")} hint={t("settings.general.languageHint")}>
                 <CustomSelect
@@ -559,12 +362,13 @@ export default function SettingsPage() {
                 </div>
               </Row>
             </SectionCard>
+            </div>
 
             {/* Navigation */}
             <div className="mt-6">
               <SectionCard icon={Layers} title="Navigation" desc="Control which sections appear in the sidebar.">
                 <Row label="Show API section" hint="Show the Developer / API group (Overview, Endpoints, Examples, Playground) in the left navigation.">
-                  <Toggle checked={settings.navigation?.showApi ?? true} onChange={v=> update("navigation.showApi", v)} />
+                  <Toggle checked={settings.navigation?.showApi ?? false} onChange={v=> update("navigation.showApi", v)} />
                 </Row>
               </SectionCard>
             </div>
@@ -710,7 +514,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={handleReset} className="h-8 px-3 bg-[#1D1C1A] border border-[#3B3A36] rounded-[6px] text-[12px] font-medium text-[#B7B5B0] hover:text-[#F0EFEC]">{t("settings.data.resetDefaults")}</button>
-                  <span className="text-[11px] text-[#66645F] flex items-center">{t("settings.data.lastExportNever")} • {t("settings.data.storedLocally")} + {isLinked ? t("settings.data.drive") : t("settings.data.notInDrive")}</span>
+                  <span className="text-[11px] text-[#66645F] flex items-center">{t("settings.data.lastExportNever")} • {t("settings.data.storedLocally")}</span>
                 </div>
               </SectionCard>
             </div>
@@ -742,26 +546,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Unlink confirm */}
-      {showUnlink && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]">
-          <div className="w-full max-w-[420px] bg-[#292824] border border-[#3B3A36] rounded-[12px] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
-            <div className="p-5">
-              <div className="w-10 h-10 rounded-full bg-[#1D1C1A] border border-[#3B3A36] flex items-center justify-center"><LogOut className="w-5 h-5 text-[#EF4444]" /></div>
-              <h3 className="text-[15px] font-semibold text-[#F0EFEC] mt-3">{t("settings.google.unlink")}? </h3>
-              <p className="text-[13px] text-[#B7B5B0] mt-1.5 leading-relaxed">{t("settings.google.localFirst")}</p>
-              <div className="mt-4 bg-[#1D1C1A] border border-[#3B3A36] rounded-[7px] px-3 py-2.5 flex items-center gap-3">
-                <img src={googleAccount?.avatar} alt="" className="w-8 h-8 rounded-full" />
-                <div><div className="text-[13px] font-medium text-[#F0EFEC]">{googleAccount?.name}</div><div className="text-[12px] text-[#85837E]">{googleAccount?.email}</div></div>
-              </div>
-            </div>
-            <div className="px-5 py-3 bg-[#1D1C1A] border-t border-[#3B3A36] flex items-center justify-end gap-2">
-              <button onClick={()=> setShowUnlink(false)} className="h-8 px-4 bg-[#292824] border border-[#3B3A36] rounded-[6px] text-[13px] font-medium text-[#B7B5B0] hover:text-[#F0EFEC]">{t("common.cancel")}</button>
-              <button onClick={handleUnlink} className="h-8 px-4 bg-[#EF4444] hover:bg-[#dc2626] text-white rounded-[6px] text-[13px] font-medium">{t("settings.google.unlink")}</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

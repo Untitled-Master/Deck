@@ -1,4 +1,4 @@
-import { Search, ChevronDown, LogOut, PlugZap, Loader2, AlertTriangle, Settings, Globe, Moon, Sun, Languages } from "lucide-react"
+import { Search, ChevronDown, LogOut, PlugZap, Loader2, AlertTriangle, Settings, Globe, Moon, Sun, Languages, User } from "lucide-react"
 import { useConnection } from "@/context/ConnectionContext"
 import { useTranslation } from "@/context/I18nContext"
 import { useTheme } from "@/context/ThemeContext"
@@ -109,16 +109,18 @@ export default function TopBar() {
           </button>
         )}
         <div ref={profileRef} className="relative">
-          <button onClick={() => setShowProfileMenu(v => !v)} className="w-8 h-8 rounded-full border border-[#3B3A36] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 hover:border-[#4A4944] transition-colors">
-            <img src="https://i.pravatar.cc/100?img=12" alt="avatar" className="w-full h-full object-cover" />
+          <button onClick={() => setShowProfileMenu(v => !v)} className="w-8 h-8 rounded-full border border-[#3B3A36] bg-[#1D1C1A] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 hover:border-[#4A4944] transition-colors" aria-label="User menu">
+            <User className="w-4 h-4 text-[#B7B5B0]" />
           </button>
           {showProfileMenu && (
             <div className="absolute right-0 top-[calc(100%+8px)] w-[260px] bg-[#292824] border border-[#3B3A36] rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] overflow-hidden z-50">
               <div className="p-3 flex items-center gap-3 border-b border-[#3B3A36]">
-                <img src="https://i.pravatar.cc/100?img=12" alt="avatar" className="w-9 h-9 rounded-full border border-[#3B3A36] object-cover" />
+                <div className="w-9 h-9 rounded-full border border-[#3B3A36] bg-[#1D1C1A] flex items-center justify-center shrink-0">
+                  <User className="w-4 h-4 text-[#B7B5B0]" />
+                </div>
                 <div className="min-w-0">
-                  <div className="text-[13px] font-medium text-[#F0EFEC] leading-none">Alex Morgan</div>
-                  <div className="text-[11px] text-[#85837E] truncate">alex.morgan@deck.local</div>
+                  <div className="text-[13px] font-medium text-[#F0EFEC] leading-none">User</div>
+                  <div className="text-[11px] text-[#85837E] truncate">Local only — no account</div>
                 </div>
                 <span className={`ml-auto w-2 h-2 rounded-full ${connected ? "bg-[#22C55E]" : "bg-[#EAB308]"}`} />
               </div>
