@@ -3,6 +3,7 @@
   <h1>Deck</h1>
   <p><strong>Your database, on deck.</strong> — Local PostgreSQL workspace for developers.</p>
   <p>
+    <img src="https://img.shields.io/npm/v/deckdb?style=flat-square" alt="npm version" />
     <img src="https://img.shields.io/badge/status-beta-orange?style=flat-square" alt="Beta" />
     <img src="https://img.shields.io/badge/license-MIT-black?style=flat-square" alt="MIT" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React" />
@@ -64,31 +65,35 @@ host=localhost  port=5432  database=mydb  user=postgres  password=280823
 
 ---
 
-## Installation & Launch
+## Installation
 
-### Option A — run the published tool (no clone needed)
+Requirements: **Node.js 18+** and a reachable **PostgreSQL 12+**. No clone, no build, no config.
+
+### Run it (recommended)
 
 ```bash
-npx deckdb
+npx -y deckdb@latest
 # → starts Deck on http://localhost:3001 and opens it in your browser
 ```
 
-Other flags:
-
-```bash
-npx deckdb --port 4000   # serve on a different port
-npx deckdb --no-open     # don't auto-open the browser
-PORT=4000 npx deckdb     # same, via environment variable
-```
-
-Or install it globally once:
+### Install it globally
 
 ```bash
 npm i -g deckdb
 deckdb
 ```
 
-### Option B — run from source
+### Options
+
+```bash
+deckdb --port 4000   # serve on a different port
+deckdb --no-open     # don't auto-open the browser
+PORT=4000 deckdb     # same, via environment variable
+deckdb --help        # all options
+deckdb --version     # installed version
+```
+
+### Run from source
 
 ```bash
 # 1 — Clone
@@ -125,7 +130,7 @@ PORT=3001
 VITE_API_URL=http://localhost:3001
 ```
 
-> Publishing to npm: `npm run prepack` rebuilds `dist/` automatically, and the published `files` include `bin/`, `server/` and `dist/` — so `npx deckdb` works out of the box.
+> Maintainers: `npm run prepack` rebuilds `dist/` automatically on `npm publish`, and the published `files` include `bin/`, `server/` and `dist/` — so `npx deckdb` works out of the box. Bump with `npm version patch|minor|major` before each publish.
 
 ---
 
